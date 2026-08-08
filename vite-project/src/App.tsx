@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Database, Table, Globe, HelpCircle, Plus, Eye, Sparkles } from 'lucide-react'
 
 export default function App() {
@@ -11,7 +11,6 @@ export default function App() {
         <div className="brand">
           <Database className="brand-icon" />
           <span className="brand-name">Synq</span>
-          <span className="brand-tag">v1.0 MVP</span>
         </div>
         <div className="nav-links">
           <button
