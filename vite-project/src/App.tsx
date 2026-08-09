@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Database, Table, Globe, HelpCircle, Plus, Eye, Sparkles } from 'lucide-react'
+import { Database, Table, Globe, HelpCircle, Eye, Sparkles } from 'lucide-react'
+import SchemaCanvas from './components/SchemaBuilder/SchemaCanvas'
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'schema' | 'data' | 'api'>('schema')
@@ -44,29 +45,7 @@ export default function App() {
 
       {/* Main Workspace */}
       <main className="workspace">
-        {activeTab === 'schema' && (
-          <div className="tab-pane">
-            <div className="pane-header">
-              <div>
-                <h2>Schema Builder</h2>
-                <p className="subtitle">Define your data models, fields, and relational mapping rules.</p>
-              </div>
-              <button className="btn btn-primary">
-                <Plus size={16} />
-                <span>Add Entity</span>
-              </button>
-            </div>
-            
-            <div className="empty-state">
-              <div className="empty-icon-wrapper">
-                <Database size={32} className="empty-icon animate-pulse" />
-              </div>
-              <h3>No Entities Created</h3>
-              <p>Get started by creating your first relational database entity.</p>
-              <button className="btn btn-primary btn-lg">Create First Entity</button>
-            </div>
-          </div>
-        )}
+        {activeTab === 'schema' && <SchemaCanvas />}
 
         {activeTab === 'data' && (
           <div className="tab-pane">
