@@ -1,9 +1,44 @@
 import { useState } from 'react'
-import { Database, Table, Globe, HelpCircle, Eye, Sparkles } from 'lucide-react'
+import { Database, Table, Globe, HelpCircle, Eye, Sparkles, AlertCircle, Trash2, Loader2 } from 'lucide-react'
 import SchemaCanvas from './components/SchemaBuilder/SchemaCanvas'
+import { useSynqStore } from './store/useSynqStore'
+import { generateSyntheticData } from './engine/dataGenerator'
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'schema' | 'data' | 'api'>('schema')
+  const {
+    entities,
+    generatedData,
+    isGenerating,
+    setGeneratedData,
+    clearGeneratedData,
+    setIsGenerating
+  } = useSynqStore()
+
+  const [recordCount, setRecordCount] = useState(100)
+  const [errorMsg, setErrorMsg] = useState('')
+  const [selectedPreviewEntityId, setSelectedPreviewEntityId] = useState<string | null>(null)
+
+  const handleGenerate = () => {
+    setErrorMsg('')
+    setIsGenerating(true)
+    
+    // Smooth delay for loading state visibility
+    setTimeout(() => {
+      try {
+        const data = generateSyntheticData(entities, recordCount)
+        setGeneratedData(data)
+        if (entities.length > 0) {
+          // Select the first entity automatically for preview
+          setSelectedPreviewEntityId(entities[0].id)
+        }
+      } catch (err: any) {
+        setErrorMsg(err.message || 'An error occurred during data generation.')
+      } finally {
+        setIsGenerating(false)
+      }
+    }, 600)
+  }
 
   return (
     <div className="app-container">
@@ -54,22 +89,120 @@ export default function App() {
                 <h2>Data Preview</h2>
                 <p className="subtitle">Visualize, search, sort, and export generated synthetic records.</p>
               </div>
-              <button className="btn btn-secondary">
-                <Sparkles size={16} />
-                <span>Generate Data</span>
-              </button>
+              {entities.length > 0 && (
+                <div className="generation-controls">
+                  <div className="control-group">
+                    <label htmlFor="record-count-input">Count</label>
+                    <input
+                      id="record-count-input"
+                      type="number"
+                      min="1"
+                      max="1000"
+                      className="form-input record-count-input"
+                      value={recordCount}
+                      onChange={(e) => setRecordCount(Math.min(1000, Math.max(1, parseInt(e.target.value) || 1)))}
+                      disabled={isGenerating}
+                    />
+                  </div>
+                  <button
+                    className="btn btn-primary"
+                    onClick={handleGenerate}
+                    disabled={isGenerating}
+                  >
+                    {isGenerating ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <Sparkles size={16} />
+                    )}
+                    <span>{isGenerating ? 'Generating...' : 'Generate Data'}</span>
+                  </button>
+                  {Object.keys(generatedData).length > 0 && (
+                    <button
+                      className="btn btn-secondary"
+                      onClick={() => {
+                        clearGeneratedData()
+                        setErrorMsg('')
+                        setSelectedPreviewEntityId(null)
+                      }}
+                      disabled={isGenerating}
+                      title="Clear Generated Data"
+                    >
+                      <Trash2 size={16} />
+                      <span>Clear</span>
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
-            
-            <div className="empty-state">
-              <div className="empty-icon-wrapper">
-                <Eye size={32} className="empty-icon" />
+
+            {errorMsg && (
+              <div className="error-banner animate-fadeIn">
+                <AlertCircle size={18} />
+                <span>{errorMsg}</span>
               </div>
-              <h3>No Synthetic Data Available</h3>
-              <p>Initialize or define a schema first, then generate records to see them in the grid.</p>
-              <button className="btn btn-secondary btn-lg" onClick={() => setActiveTab('schema')}>
-                Go to Schema Builder
-              </button>
-            </div>
+            )}
+
+            {entities.length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-icon-wrapper">
+                  <Database size={32} className="empty-icon" />
+                </div>
+                <h3>No Entities Defined</h3>
+                <p>Go to the Schema Builder first to define your database tables and relations.</p>
+                <button className="btn btn-primary btn-lg" onClick={() => setActiveTab('schema')}>
+                  Go to Schema Builder
+                </button>
+              </div>
+            ) : Object.keys(generatedData).length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-icon-wrapper">
+                  <Eye size={32} className="empty-icon" />
+                </div>
+                <h3>No Synthetic Data Available</h3>
+                <p>Configure the record count above and click "Generate Data" to populate your models.</p>
+              </div>
+            ) : (
+              <div className="data-preview-layout animate-fadeIn">
+                {/* Entity Navigation Sidebar */}
+                <div className="data-preview-sidebar glass-card">
+                  {entities.map((entity) => {
+                    const rowCount = generatedData[entity.id]?.length || 0
+                    const isActive = selectedPreviewEntityId === entity.id
+                    return (
+                      <button
+                        key={entity.id}
+                        className={`sidebar-item ${isActive ? 'active' : ''}`}
+                        onClick={() => setSelectedPreviewEntityId(entity.id)}
+                      >
+                        <span className="sidebar-entity-name">{entity.name}</span>
+                        <span className="sidebar-row-count">{rowCount} rows</span>
+                      </button>
+                    )
+                  })}
+                </div>
+
+                {/* Data Preview content */}
+                <div className="data-preview-content">
+                  {selectedPreviewEntityId && (
+                    <div className="glass-card preview-card">
+                      <div className="preview-card-header">
+                        <h4>{entities.find((e) => e.id === selectedPreviewEntityId)?.name} (Raw Preview)</h4>
+                        <span className="preview-info-badge">First 3 rows shown</span>
+                      </div>
+                      <div className="preview-json-wrapper">
+                        <pre>
+                          {JSON.stringify(
+                            (generatedData[selectedPreviewEntityId] || []).slice(0, 3),
+                            null,
+                            2
+                          )}
+                        </pre>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
