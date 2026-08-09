@@ -1,6 +1,8 @@
 import { useState } from 'react'
-import { Database, Table, Globe, HelpCircle, Eye, Sparkles, AlertCircle, Trash2, Loader2 } from 'lucide-react'
+import { Database, Table, Globe, HelpCircle, Eye, Sparkles, AlertCircle, Trash2, Loader2, Download } from 'lucide-react'
 import SchemaCanvas from './components/SchemaBuilder/SchemaCanvas'
+import DataGrid from './components/DataPreview/DataGrid'
+import ExportModal from './components/DataPreview/ExportModal'
 import { useSynqStore } from './store/useSynqStore'
 import { generateSyntheticData } from './engine/dataGenerator'
 
@@ -18,6 +20,7 @@ export default function App() {
   const [recordCount, setRecordCount] = useState(100)
   const [errorMsg, setErrorMsg] = useState('')
   const [selectedPreviewEntityId, setSelectedPreviewEntityId] = useState<string | null>(null)
+  const [isExportOpen, setIsExportOpen] = useState(false)
 
   const handleGenerate = () => {
     setErrorMsg('')
@@ -117,19 +120,29 @@ export default function App() {
                     <span>{isGenerating ? 'Generating...' : 'Generate Data'}</span>
                   </button>
                   {Object.keys(generatedData).length > 0 && (
-                    <button
-                      className="btn btn-secondary"
-                      onClick={() => {
-                        clearGeneratedData()
-                        setErrorMsg('')
-                        setSelectedPreviewEntityId(null)
-                      }}
-                      disabled={isGenerating}
-                      title="Clear Generated Data"
-                    >
-                      <Trash2 size={16} />
-                      <span>Clear</span>
-                    </button>
+                    <>
+                      <button
+                        className="btn btn-secondary"
+                        onClick={() => setIsExportOpen(true)}
+                        disabled={isGenerating}
+                      >
+                        <Download size={16} />
+                        <span>Export</span>
+                      </button>
+                      <button
+                        className="btn btn-secondary"
+                        onClick={() => {
+                          clearGeneratedData()
+                          setErrorMsg('')
+                          setSelectedPreviewEntityId(null)
+                        }}
+                        disabled={isGenerating}
+                        title="Clear Generated Data"
+                      >
+                        <Trash2 size={16} />
+                        <span>Clear</span>
+                      </button>
+                    </>
                   )}
                 </div>
               )}
@@ -184,21 +197,7 @@ export default function App() {
                 {/* Data Preview content */}
                 <div className="data-preview-content">
                   {selectedPreviewEntityId && (
-                    <div className="glass-card preview-card">
-                      <div className="preview-card-header">
-                        <h4>{entities.find((e) => e.id === selectedPreviewEntityId)?.name} (Raw Preview)</h4>
-                        <span className="preview-info-badge">First 3 rows shown</span>
-                      </div>
-                      <div className="preview-json-wrapper">
-                        <pre>
-                          {JSON.stringify(
-                            (generatedData[selectedPreviewEntityId] || []).slice(0, 3),
-                            null,
-                            2
-                          )}
-                        </pre>
-                      </div>
-                    </div>
+                    <DataGrid entityId={selectedPreviewEntityId} />
                   )}
                 </div>
               </div>
@@ -228,6 +227,13 @@ export default function App() {
           </div>
         )}
       </main>
+
+      {/* Export Modal overlay */}
+      <ExportModal
+        isOpen={isExportOpen}
+        onClose={() => setIsExportOpen(false)}
+        activeEntityId={selectedPreviewEntityId}
+      />
 
       {/* Footer */}
       <footer className="app-footer">

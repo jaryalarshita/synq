@@ -850,22 +850,301 @@ body {
   border-radius: var(--radius-sm);
 }
 
-.preview-json-wrapper {
+/* Data Grid Layout */
+.grid-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
   flex: 1;
-  background: #090909;
+  min-height: 0;
+}
+
+.grid-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+}
+
+.search-box-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 10px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.search-input {
+  padding-left: 32px;
+  width: 220px;
+  font-size: 13px;
+  height: 36px;
+  transition: width 0.2s ease;
+}
+
+.search-input:focus {
+  width: 280px;
+}
+
+.grid-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Data Table Component */
+.table-wrapper {
+  flex: 1;
+  overflow: auto;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  padding: var(--spacing-md);
-  overflow: auto;
+  background: #151515;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-family: var(--font-sans);
+  font-size: 13px;
+}
+
+.data-table th, .data-table td {
+  padding: 10px var(--spacing-sm);
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.data-table th {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.sortable-th {
+  cursor: pointer;
+  user-select: none;
+}
+
+.sortable-th:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.th-content {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.sort-icon-active {
+  color: var(--text-primary);
+}
+
+.sort-icon-inactive {
+  color: var(--text-muted);
+  opacity: 0.3;
+}
+
+.data-table tbody tr {
+  transition: background 0.15s ease;
+}
+
+.data-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.no-rows-cell {
+  text-align: center;
+  color: var(--text-muted);
+  font-style: italic;
+  padding: var(--spacing-xl) !important;
+}
+
+.cell-null {
+  color: var(--text-muted);
+  font-style: italic;
+  font-size: 11px;
+}
+
+.cell-boolean {
+  font-size: 11px;
   font-family: var(--font-mono);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.boolean-true {
+  background: rgba(46, 189, 89, 0.1);
+  color: #58d67d;
+  border: 1px solid rgba(46, 189, 89, 0.2);
+}
+
+.boolean-false {
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+
+/* Pagination Footer */
+.grid-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+  padding: 4px 0;
+}
+
+.pagination-info {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.btn-sm {
+  padding: 6px var(--spacing-md);
   font-size: 12px;
-  color: #c5c5c5;
 }
 
-.preview-json-wrapper pre {
-  margin: 0;
-  white-space: pre-wrap;
-  word-wrap: break-word;
+/* Export Modal Selector UI */
+.export-format-selector {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-xs);
 }
 
+.format-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-md) var(--spacing-sm);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: center;
+}
 
+.format-card:hover {
+  border-color: var(--border-hover);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.format-card.active {
+  border-color: var(--accent-primary);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.format-icon {
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-sm);
+  transition: color 0.2s ease;
+}
+
+.format-card:hover .format-icon,
+.format-card.active .format-icon {
+  color: var(--text-primary);
+}
+
+.format-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.format-desc {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+/* Export Scope Selector UI */
+.export-scope-selector {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-xs);
+}
+
+.scope-option {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.scope-option:hover {
+  border-color: var(--border-hover);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.scope-option.active {
+  border-color: var(--border-focus);
+}
+
+.radio-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid var(--text-muted);
+  position: relative;
+  margin-top: 2px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.scope-option:hover .radio-dot {
+  border-color: var(--text-secondary);
+}
+
+.scope-option.active .radio-dot {
+  border-color: var(--text-primary);
+}
+
+.scope-option.active .radio-dot::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-primary);
+}
+
+.scope-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.scope-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.scope-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
