@@ -27,6 +27,7 @@ interface SynqState {
   setGeneratedData: (data: Record<string, any[]>) => void
   clearGeneratedData: () => void
   setIsGenerating: (isGenerating: boolean) => void
+  addRecord: (entityId: string, record: any) => void
 }
 
 export const useSynqStore = create<SynqState>((set) => ({
@@ -90,5 +91,11 @@ export const useSynqStore = create<SynqState>((set) => ({
   isGenerating: false,
   setGeneratedData: (data) => set({ generatedData: data }),
   clearGeneratedData: () => set({ generatedData: {} }),
-  setIsGenerating: (isGenerating) => set({ isGenerating })
+  setIsGenerating: (isGenerating) => set({ isGenerating }),
+  addRecord: (entityId, record) => set((state) => ({
+    generatedData: {
+      ...state.generatedData,
+      [entityId]: [...(state.generatedData[entityId] || []), record]
+    }
+  }))
 }))
