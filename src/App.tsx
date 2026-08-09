@@ -3,6 +3,7 @@ import { Database, Table, Globe, HelpCircle, Eye, Sparkles, AlertCircle, Trash2,
 import SchemaCanvas from './components/SchemaBuilder/SchemaCanvas'
 import DataGrid from './components/DataPreview/DataGrid'
 import ExportModal from './components/DataPreview/ExportModal'
+import EndpointRunner from './components/APIMockSandbox/EndpointRunner'
 import { useSynqStore } from './store/useSynqStore'
 import { generateSyntheticData } from './engine/dataGenerator'
 
@@ -205,27 +206,7 @@ export default function App() {
           </div>
         )}
 
-        {activeTab === 'api' && (
-          <div className="tab-pane">
-            <div className="pane-header">
-              <div>
-                <h2>API Mock Sandbox</h2>
-                <p className="subtitle">Simulate client requests directly against generated databases inside the browser.</p>
-              </div>
-            </div>
-            
-            <div className="empty-state">
-              <div className="empty-icon-wrapper">
-                <Globe size={32} className="empty-icon" />
-              </div>
-              <h3>Mock Server Not Initialized</h3>
-              <p>Generate data for your entities to spin up standard simulated REST endpoints.</p>
-              <button className="btn btn-primary btn-lg" onClick={() => setActiveTab('data')}>
-                Generate Data First
-              </button>
-            </div>
-          </div>
-        )}
+        {activeTab === 'api' && <EndpointRunner />}
       </main>
 
       {/* Export Modal overlay */}
