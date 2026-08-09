@@ -17,12 +17,16 @@ export interface Entity {
 interface SynqState {
   entities: Entity[]
   generatedData: Record<string, any[]>
+  isGenerating: boolean
   addEntity: (name: string) => void
   updateEntityName: (id: string, name: string) => void
   deleteEntity: (id: string) => void
   addField: (entityId: string, field: Omit<SchemaField, 'id'>) => void
   updateField: (entityId: string, fieldId: string, updatedField: Partial<SchemaField>) => void
   deleteField: (entityId: string, fieldId: string) => void
+  setGeneratedData: (data: Record<string, any[]>) => void
+  clearGeneratedData: () => void
+  setIsGenerating: (isGenerating: boolean) => void
 }
 
 export const useSynqStore = create<SynqState>((set) => ({
@@ -81,5 +85,10 @@ export const useSynqStore = create<SynqState>((set) => ({
         ? { ...ent, fields: ent.fields.filter((f) => f.id !== fieldId) } 
         : ent
     )
-  }))
+  })),
+
+  isGenerating: false,
+  setGeneratedData: (data) => set({ generatedData: data }),
+  clearGeneratedData: () => set({ generatedData: {} }),
+  setIsGenerating: (isGenerating) => set({ isGenerating })
 }))
