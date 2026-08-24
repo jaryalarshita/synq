@@ -31,12 +31,7 @@ export function exportToJSON(data: any, fileName: string) {
 function formatCSVCell(value: any): string {
   if (value === null || value === undefined) return ''
   
-  let stringVal = ''
-  if (typeof value === 'object') {
-    stringVal = JSON.stringify(value)
-  } else {
-    stringVal = String(value)
-  }
+  const stringVal = typeof value === 'object' ? JSON.stringify(value) : String(value)
 
   // If the value contains quotes, commas, or newlines, escape quotes by doubling them and wrap in double quotes
   if (stringVal.includes('"') || stringVal.includes(',') || stringVal.includes('\n') || stringVal.includes('\r')) {
@@ -69,12 +64,13 @@ function formatSQLValue(value: any, type: string): string {
 
   switch (type) {
     case 'number':
-    case 'currency':
+    case 'currency': {
       if (typeof value === 'number' && !isNaN(value)) {
         return String(value)
       }
       const parsedNum = parseFloat(value)
       return isNaN(parsedNum) ? 'NULL' : String(parsedNum)
+    }
 
     case 'boolean':
       return value ? 'TRUE' : 'FALSE'
@@ -85,10 +81,11 @@ function formatSQLValue(value: any, type: string): string {
     case 'enum':
     case 'foreign_key':
     case 'string':
-    default:
+    default: {
       // Double the single quotes to escape them in SQL string literal
       const escaped = String(value).replace(/'/g, "''")
       return `'${escaped}'`
+    }
   }
 }
 

@@ -176,7 +176,7 @@ export async function simulateApiRequest(
       let parsedBody: Record<string, any> = {}
       try {
         parsedBody = JSON.parse(body || '{}')
-      } catch (e) {
+      } catch {
         const duration = Math.round(performance.now() - startTime)
         return {
           status: 400,

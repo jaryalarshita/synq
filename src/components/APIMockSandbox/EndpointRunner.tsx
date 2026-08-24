@@ -76,10 +76,11 @@ export default function EndpointRunner() {
             case 'enum':
               templateObj[field.name] = field.options?.[0] || 'option'
               break
-            case 'foreign_key':
+            case 'foreign_key': {
               const refRows = field.referenceEntityId ? (generatedData[field.referenceEntityId] || []) : []
               templateObj[field.name] = refRows[0]?.id || 'sample-parent-uuid'
               break
+            }
             case 'string':
             default:
               templateObj[field.name] = field.name.toLowerCase().includes('name') ? 'John Doe' : 'lorem'
@@ -123,7 +124,7 @@ export default function EndpointRunner() {
       try {
         JSON.parse(bodyInput)
         setBodyError('')
-      } catch (err: any) {
+      } catch {
         setBodyError('Malformed JSON payload body')
         return
       }

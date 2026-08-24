@@ -95,7 +95,7 @@ function generateFieldValue(
       }
       return null
 
-    case 'foreign_key':
+    case 'foreign_key': {
       const targetEntityId = field.referenceEntityId
       if (!targetEntityId) return null
       const targetRows = generatedData[targetEntityId] || []
@@ -106,6 +106,7 @@ function generateFieldValue(
       // Pick a random row from target table and copy its ID
       const randomRow = targetRows[faker.number.int({ min: 0, max: targetRows.length - 1 })]
       return randomRow.id || null
+    }
 
     case 'string':
     default:

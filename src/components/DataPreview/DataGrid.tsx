@@ -59,7 +59,7 @@ export default function DataGrid({ entityId }: DataGridProps) {
     if (valA === null || valA === undefined) return sortDirection === 'asc' ? 1 : -1
     if (valB === null || valB === undefined) return sortDirection === 'asc' ? -1 : 1
 
-    let comparison = 0
+    let comparison: number
     if (typeof valA === 'number' && typeof valB === 'number') {
       comparison = valA - valB
     } else if (typeof valA === 'boolean' && typeof valB === 'boolean') {
