@@ -33,7 +33,7 @@ interface SynqState {
 export const useSynqStore = create<SynqState>((set) => ({
   entities: [],
   generatedData: {},
-  
+
   addEntity: (name) => set((state) => ({
     entities: [
       ...state.entities,
@@ -42,14 +42,14 @@ export const useSynqStore = create<SynqState>((set) => ({
   })),
 
   updateEntityName: (id, name) => set((state) => ({
-    entities: state.entities.map((ent) => 
+    entities: state.entities.map((ent) =>
       ent.id === id ? { ...ent, name } : ent
     )
   })),
 
-  deleteEntity: (id) => set((state) => ({
+  deleteEntity: (id) => set((state) => {
     // Delete the entity and clean up any Foreign Key fields referencing this entity
-    entities: state.entities
+    const entities = state.entities
       .filter((ent) => ent.id !== id)
       .map((ent) => ({
         ...ent,
@@ -57,22 +57,27 @@ export const useSynqStore = create<SynqState>((set) => ({
           (field) => !(field.type === 'foreign_key' && field.referenceEntityId === id)
         )
       }))
-  })),
+
+    // Also drop any generated records that belonged to the deleted entity
+    const { [id]: _removed, ...generatedData } = state.generatedData
+
+    return { entities, generatedData }
+  }),
 
   addField: (entityId, field) => set((state) => ({
-    entities: state.entities.map((ent) => 
-      ent.id === entityId 
-        ? { ...ent, fields: [...ent.fields, { ...field, id: crypto.randomUUID() } as SchemaField] } 
+    entities: state.entities.map((ent) =>
+      ent.id === entityId
+        ? { ...ent, fields: [...ent.fields, { ...field, id: crypto.randomUUID() } as SchemaField] }
         : ent
     )
   })),
 
   updateField: (entityId, fieldId, updatedField) => set((state) => ({
-    entities: state.entities.map((ent) => 
-      ent.id === entityId 
+    entities: state.entities.map((ent) =>
+      ent.id === entityId
         ? {
             ...ent,
-            fields: ent.fields.map((f) => 
+            fields: ent.fields.map((f) =>
               f.id === fieldId ? { ...f, ...updatedField } as SchemaField : f
             )
           }
@@ -81,9 +86,9 @@ export const useSynqStore = create<SynqState>((set) => ({
   })),
 
   deleteField: (entityId, fieldId) => set((state) => ({
-    entities: state.entities.map((ent) => 
-      ent.id === entityId 
-        ? { ...ent, fields: ent.fields.filter((f) => f.id !== fieldId) } 
+    entities: state.entities.map((ent) =>
+      ent.id === entityId
+        ? { ...ent, fields: ent.fields.filter((f) => f.id !== fieldId) }
         : ent
     )
   })),
