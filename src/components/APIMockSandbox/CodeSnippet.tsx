@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Check, Copy } from 'lucide-react'
+import { generateCodeSnippets } from '../../engine/codeGenerators'
 
 interface CodeSnippetProps {
   method: 'GET' | 'POST'
@@ -11,54 +12,8 @@ export default function CodeSnippet({ method, path, body }: CodeSnippetProps) {
   const [activeTab, setActiveTab] = useState<'curl' | 'fetch'>('curl')
   const [copied, setCopied] = useState(false)
 
-  // Ensure path starts with a slash
-  const cleanPath = path.startsWith('/') ? path : `/${path}`
-  const baseUrl = 'http://localhost:5173'
-  const fullUrl = `${baseUrl}${cleanPath}`
-
-  // 1. Generate cURL snippet
-  const getCurlSnippet = (): string => {
-    if (method === 'GET') {
-      return `curl -X GET "${fullUrl}"`
-    }
-    
-    // Format JSON body for single line
-    let singleLineBody = ''
-    try {
-      if (body) {
-        singleLineBody = JSON.stringify(JSON.parse(body))
-      }
-    } catch {
-      singleLineBody = body || ''
-    }
-
-    return `curl -X POST "${fullUrl}" \\\n  -H "Content-Type: application/json" \\\n  -d '${singleLineBody}'`
-  }
-
-  // 2. Generate JavaScript fetch snippet
-  const getFetchSnippet = (): string => {
-    if (method === 'GET') {
-      return `fetch('${fullUrl}')\n  .then(response => response.json())\n  .then(data => console.log(data))\n  .catch(error => console.error('Error:', error));`
-    }
-
-    // Format body with indentation for JS snippet
-    let formattedBody = '{\n    // payload\n  }'
-    try {
-      if (body) {
-        const parsed = JSON.parse(body)
-        formattedBody = JSON.stringify(parsed, null, 2)
-          .split('\n')
-          .map((line, i) => (i === 0 ? line : `  ${line}`))
-          .join('\n')
-      }
-    } catch {
-      formattedBody = body || ''
-    }
-
-    return `fetch('${fullUrl}', {\n  method: 'POST',\n  headers: {\n    'Content-Type': 'application/json'\n  },\n  body: JSON.stringify(${formattedBody})\n})\n  .then(response => response.json())\n  .then(data => console.log(data))\n  .catch(error => console.error('Error:', error));`
-  }
-
-  const activeSnippet = activeTab === 'curl' ? getCurlSnippet() : getFetchSnippet()
+  const snippets = generateCodeSnippets(method, path, body)
+  const activeSnippet = activeTab === 'curl' ? snippets.curl : snippets.fetch
 
   const handleCopy = () => {
     navigator.clipboard.writeText(activeSnippet)
