@@ -22,6 +22,7 @@ export default function App() {
   const [errorMsg, setErrorMsg] = useState('')
   const [selectedPreviewEntityId, setSelectedPreviewEntityId] = useState<string | null>(null)
   const [isExportOpen, setIsExportOpen] = useState(false)
+  const [isAboutOpen, setIsAboutOpen] = useState(false)
 
   const handleGenerate = () => {
     setErrorMsg('')
@@ -76,9 +77,28 @@ export default function App() {
           </button>
         </div>
         <div className="nav-actions">
-          <a href="#docs" className="docs-link" title="Documentation">
+          <button
+            type="button"
+            className="docs-link"
+            title="About Synq"
+            aria-expanded={isAboutOpen}
+            onClick={() => setIsAboutOpen((prev) => !prev)}
+          >
             <HelpCircle size={20} />
-          </a>
+          </button>
+          {isAboutOpen && (
+            <div className="about-popover glass-card animate-fadeIn" role="dialog" aria-label="About Synq">
+              <h4>About Synq</h4>
+              <p>
+                Synq is a serverless developer tool that runs entirely in your browser: visually design
+                relational schemas, generate realistic synthetic data with real foreign-key integrity,
+                preview/export it, and exercise a mock REST API — no backend required.
+              </p>
+              <button type="button" className="btn btn-secondary btn-sm" onClick={() => setIsAboutOpen(false)}>
+                Got it
+              </button>
+            </div>
+          )}
         </div>
       </header>
 
