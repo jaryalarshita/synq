@@ -5,7 +5,6 @@ import DataGrid from './components/DataPreview/DataGrid'
 import ExportModal from './components/DataPreview/ExportModal'
 import EndpointRunner from './components/APIMockSandbox/EndpointRunner'
 import { useSynqStore } from './store/useSynqStore'
-import { generateSyntheticData } from './engine/dataGenerator'
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'schema' | 'data' | 'api'>('schema')
@@ -29,8 +28,10 @@ export default function App() {
     setIsGenerating(true)
     
     // Smooth delay for loading state visibility
-    setTimeout(() => {
+    setTimeout(async () => {
       try {
+        // Loaded on demand so the Faker bundle stays out of the initial page load
+        const { generateSyntheticData } = await import('./engine/dataGenerator')
         const data = generateSyntheticData(entities, recordCount)
         setGeneratedData(data)
         if (entities.length > 0) {
