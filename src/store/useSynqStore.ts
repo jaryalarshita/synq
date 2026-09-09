@@ -51,6 +51,21 @@ export const useSynqStore = create<SynqState>()(
       })),
 
       deleteEntity: (id) => set((state) => {
+        // Before mutating the schema, note which other entities had a Foreign
+        // Key field pointing at the entity being deleted, so their already
+        // generated rows can be scrubbed too (otherwise those rows keep a
+        // dangling FK value/column for a field that no longer exists).
+        const orphanedFieldNamesByEntity = new Map<string, string[]>()
+        for (const ent of state.entities) {
+          if (ent.id === id) continue
+          const orphanedFieldNames = ent.fields
+            .filter((field) => field.type === 'foreign_key' && field.referenceEntityId === id)
+            .map((field) => field.name)
+          if (orphanedFieldNames.length > 0) {
+            orphanedFieldNamesByEntity.set(ent.id, orphanedFieldNames)
+          }
+        }
+
         // Delete the entity and clean up any Foreign Key fields referencing this entity
         const entities = state.entities
           .filter((ent) => ent.id !== id)
@@ -61,8 +76,26 @@ export const useSynqStore = create<SynqState>()(
             )
           }))
 
-        // Also drop any generated records that belonged to the deleted entity
-        const { [id]: _removed, ...generatedData } = state.generatedData
+        // Drop any generated records that belonged to the deleted entity itself...
+        const { [id]: _removed, ...restGeneratedData } = state.generatedData
+
+        // ...and strip the now-orphaned FK columns from every other entity's
+        // already generated rows so no stale reference to a deleted record survives.
+        const generatedData = Object.fromEntries(
+          Object.entries(restGeneratedData).map(([entityId, rows]) => {
+            const orphanedFieldNames = orphanedFieldNamesByEntity.get(entityId)
+            if (!orphanedFieldNames) return [entityId, rows]
+
+            const cleanedRows = rows.map((row) => {
+              const cleanedRow = { ...row }
+              for (const fieldName of orphanedFieldNames) {
+                delete cleanedRow[fieldName]
+              }
+              return cleanedRow
+            })
+            return [entityId, cleanedRows]
+          })
+        )
 
         return { entities, generatedData }
       }),
