@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Search, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react'
 import { useSynqStore } from '../../store/useSynqStore'
 
@@ -18,20 +18,16 @@ export default function DataGrid({ entityId }: DataGridProps) {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
   const [currentPage, setCurrentPage] = useState(1)
 
+  // Reset page to 1 whenever the search query changes, without a
+  // dedicated effect (React's "adjust state during render" pattern —
+  // avoids the extra render an effect-based reset would cause).
+  const [lastSearchQuery, setLastSearchQuery] = useState(searchQuery)
+  if (searchQuery !== lastSearchQuery) {
+    setLastSearchQuery(searchQuery)
+    setCurrentPage(1)
+  }
+
   const pageSize = 25
-
-  // Reset pagination and search when selected entity changes
-  useEffect(() => {
-    setCurrentPage(1)
-    setSearchQuery('')
-    setSortColumn('id')
-    setSortDirection('asc')
-  }, [entityId])
-
-  // Reset page to 1 when search query changes
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [searchQuery])
 
   if (!entity) return null
 
