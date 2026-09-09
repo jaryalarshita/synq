@@ -218,7 +218,9 @@ export default function App() {
                 {/* Data Preview content */}
                 <div className="data-preview-content">
                   {selectedPreviewEntityId && (
-                    <DataGrid entityId={selectedPreviewEntityId} />
+                    // key remounts the grid on entity switch, resetting its
+                    // internal search/sort/pagination state for free.
+                    <DataGrid key={selectedPreviewEntityId} entityId={selectedPreviewEntityId} />
                   )}
                 </div>
               </div>

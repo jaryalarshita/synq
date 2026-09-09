@@ -17,9 +17,13 @@ export default function EntityCard({ entity, onAddFieldClick, onEditFieldClick }
   const [nameError, setNameError] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
+  // Keep the edit buffer in sync with the entity's name whenever it changes
+  // externally, adjusted during render rather than via an effect+re-render.
+  const [lastEntityName, setLastEntityName] = useState(entity.name)
+  if (entity.name !== lastEntityName) {
+    setLastEntityName(entity.name)
     setNameInput(entity.name)
-  }, [entity.name])
+  }
 
   useEffect(() => {
     if (isEditingName && inputRef.current) {
