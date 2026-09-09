@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { simulateApiRequest } from './mockApiServer'
-import type { Entity } from '../store/useSynqStore'
+import { DEFAULT_CHAOS_CONFIG } from '../store/useSynqStore'
+import type { ChaosConfig, Entity } from '../store/useSynqStore'
 
 const usersEntity: Entity = {
   id: 'entity-users',
@@ -119,5 +120,97 @@ describe('simulateApiRequest — unsupported method', () => {
   it('returns 405 for a method other than GET/POST', async () => {
     const res = await simulateApiRequest('DELETE' as any, '/api/users', undefined, entities, generatedData, noopAddRecord())
     expect(res.status).toBe(405)
+  })
+})
+
+describe('simulateApiRequest — chaos injection', () => {
+  function chaos(overrides: Partial<ChaosConfig> = {}): ChaosConfig {
+    return {
+      ...DEFAULT_CHAOS_CONFIG,
+      enabled: true,
+      latencyMin: 0,
+      latencyMax: 0,
+      ...overrides
+    }
+  }
+
+  // A fixed roll makes the outcome of the single chaos draw predictable.
+  const rollOf = (value: number) => () => value
+
+  it('never injects while chaos is disabled, whatever the rates say', async () => {
+    const config = chaos({ enabled: false, errorRates: { 500: 100, 429: 100, 404: 100 } })
+
+    const res = await simulateApiRequest('GET', '/api/users', undefined, entities, generatedData, noopAddRecord(), {
+      chaos: config,
+      random: rollOf(0)
+    })
+
+    expect(res.status).toBe(200)
+    expect(res.injected).toBeUndefined()
+  })
+
+  it('never injects when every rate is zero', async () => {
+    const res = await simulateApiRequest('GET', '/api/users', undefined, entities, generatedData, noopAddRecord(), {
+      chaos: chaos(),
+      random: rollOf(0)
+    })
+
+    expect(res.status).toBe(200)
+  })
+
+  it('always injects a 500 at a 100% failure rate', async () => {
+    const res = await simulateApiRequest('GET', '/api/users', undefined, entities, generatedData, noopAddRecord(), {
+      chaos: chaos({ errorRates: { 500: 100, 429: 0, 404: 0 } }),
+      random: rollOf(0.99)
+    })
+
+    expect(res.status).toBe(500)
+    expect(res.statusText).toBe('Internal Server Error')
+    expect(res.injected).toBe(true)
+    expect(res.data.injectedByChaos).toBe(true)
+  })
+
+  it('lays the rates end to end so each status owns its own slice', async () => {
+    const config = chaos({ errorRates: { 500: 10, 429: 5, 404: 5 } })
+    const statusFor = async (roll: number) =>
+      (
+        await simulateApiRequest('GET', '/api/users', undefined, entities, generatedData, noopAddRecord(), {
+          chaos: config,
+          random: () => roll
+        })
+      ).status
+
+    expect(await statusFor(0.05)).toBe(500) // roll 5  -> within 0-10
+    expect(await statusFor(0.12)).toBe(429) // roll 12 -> within 10-15
+    expect(await statusFor(0.17)).toBe(404) // roll 17 -> within 15-20
+    expect(await statusFor(0.5)).toBe(200) // roll 50 -> no injection
+  })
+
+  it('short-circuits before routing, so even a valid POST is not persisted', async () => {
+    const addRecord = vi.fn()
+
+    const res = await simulateApiRequest(
+      'POST',
+      '/api/users',
+      JSON.stringify({ email: 'e@example.com', role: 'admin', age: 22 }),
+      entities,
+      generatedData,
+      addRecord,
+      { chaos: chaos({ errorRates: { 500: 100, 429: 0, 404: 0 } }), random: rollOf(0) }
+    )
+
+    expect(res.status).toBe(500)
+    expect(addRecord).not.toHaveBeenCalled()
+  })
+
+  it('samples the configured latency window', async () => {
+    const res = await simulateApiRequest('GET', '/api/users', undefined, entities, generatedData, noopAddRecord(), {
+      chaos: chaos({ latencyMin: 60, latencyMax: 90 }),
+      random: rollOf(0)
+    })
+
+    // rng of 0 picks the floor of the range; timing includes routing overhead.
+    expect(res.timeMs).toBeGreaterThanOrEqual(55)
+    expect(res.status).toBe(200)
   })
 })

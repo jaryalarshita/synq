@@ -1,10 +1,15 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { useSynqStore } from './useSynqStore'
+import { useSynqStore, DEFAULT_CHAOS_CONFIG, MAX_CHAOS_LATENCY_MS } from './useSynqStore'
 
 // Reset the store (it's a module-level singleton) before every test so
 // state from one test can't leak into the next.
 beforeEach(() => {
-  useSynqStore.setState({ entities: [], generatedData: {}, isGenerating: false })
+  useSynqStore.setState({
+    entities: [],
+    generatedData: {},
+    isGenerating: false,
+    chaosConfig: DEFAULT_CHAOS_CONFIG
+  })
 })
 
 describe('useSynqStore entity/field CRUD', () => {
@@ -110,6 +115,69 @@ describe('useSynqStore deleteEntity', () => {
     useSynqStore.getState().deleteEntity(usersId)
 
     expect(useSynqStore.getState().generatedData[productsId]).toEqual([{ id: 'p1', name: 'Widget' }])
+  })
+})
+
+describe('useSynqStore chaos config', () => {
+  it('starts disabled with the original latency feel and no error rates', () => {
+    const { chaosConfig } = useSynqStore.getState()
+
+    expect(chaosConfig).toEqual(DEFAULT_CHAOS_CONFIG)
+    expect(chaosConfig.enabled).toBe(false)
+  })
+
+  it('merges a partial patch without dropping the other settings', () => {
+    useSynqStore.getState().updateChaosConfig({ enabled: true })
+
+    const { chaosConfig } = useSynqStore.getState()
+    expect(chaosConfig.enabled).toBe(true)
+    expect(chaosConfig.latencyMin).toBe(DEFAULT_CHAOS_CONFIG.latencyMin)
+  })
+
+  it('merges error rates individually rather than replacing the whole map', () => {
+    useSynqStore.getState().updateChaosConfig({ errorRates: { 500: 25 } as any })
+
+    expect(useSynqStore.getState().chaosConfig.errorRates).toEqual({ 500: 25, 429: 0, 404: 0 })
+  })
+
+  it('clamps latency to the supported window', () => {
+    useSynqStore.getState().updateChaosConfig({ latencyMin: -50, latencyMax: 99999 })
+
+    const { chaosConfig } = useSynqStore.getState()
+    expect(chaosConfig.latencyMin).toBe(0)
+    expect(chaosConfig.latencyMax).toBe(MAX_CHAOS_LATENCY_MS)
+  })
+
+  it('pushes the max up when the min is dragged past it', () => {
+    useSynqStore.getState().updateChaosConfig({ latencyMin: 1000, latencyMax: 500 })
+    useSynqStore.getState().updateChaosConfig({ latencyMin: 2000 })
+
+    const { chaosConfig } = useSynqStore.getState()
+    expect(chaosConfig.latencyMin).toBe(2000)
+    expect(chaosConfig.latencyMax).toBe(2000)
+  })
+
+  it('pulls the min down when the max is dragged below it', () => {
+    useSynqStore.getState().updateChaosConfig({ latencyMin: 3000, latencyMax: 4000 })
+    useSynqStore.getState().updateChaosConfig({ latencyMax: 1000 })
+
+    const { chaosConfig } = useSynqStore.getState()
+    expect(chaosConfig.latencyMin).toBe(1000)
+    expect(chaosConfig.latencyMax).toBe(1000)
+  })
+
+  it('clamps error rates to 0-100', () => {
+    useSynqStore.getState().updateChaosConfig({ errorRates: { 500: 150, 429: -10, 404: 50 } })
+
+    expect(useSynqStore.getState().chaosConfig.errorRates).toEqual({ 500: 100, 429: 0, 404: 50 })
+  })
+
+  it('restores the defaults on reset', () => {
+    useSynqStore.getState().updateChaosConfig({ enabled: true, latencyMin: 900, latencyMax: 4000 })
+
+    useSynqStore.getState().resetChaosConfig()
+
+    expect(useSynqStore.getState().chaosConfig).toEqual(DEFAULT_CHAOS_CONFIG)
   })
 })
 

@@ -6,7 +6,7 @@ import type { MockApiResponse } from '../../engine/mockApiServer'
 import CodeSnippet from './CodeSnippet'
 
 export default function EndpointRunner() {
-  const { entities, generatedData, addRecord } = useSynqStore()
+  const { entities, generatedData, addRecord, chaosConfig } = useSynqStore()
 
   // Sandbox States
   const [selectedRoute, setSelectedRoute] = useState<{
@@ -146,7 +146,8 @@ export default function EndpointRunner() {
       method === 'POST' ? bodyInput : undefined,
       entities,
       generatedData,
-      addRecord
+      addRecord,
+      { chaos: chaosConfig }
     )
 
     setResponse(res)
