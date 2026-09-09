@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Send, Globe, Loader2, Play } from 'lucide-react'
 import { useSynqStore } from '../../store/useSynqStore'
 import { simulateApiRequest } from '../../engine/mockApiServer'
@@ -22,81 +22,88 @@ export default function EndpointRunner() {
   const [isLoading, setIsLoading] = useState(false)
   const [response, setResponse] = useState<MockApiResponse | null>(null)
 
-  // Autoselect first route on mount
-  useEffect(() => {
-    if (entities.length > 0 && !selectedRoute) {
-      const firstEntity = entities[0]
-      setSelectedRoute({
-        entityId: firstEntity.id,
-        method: 'GET',
-        pathTemplate: `/api/${firstEntity.name.toLowerCase()}`
-      })
+  // Autoselect the first entity's GET route once entities exist. Adjusted
+  // directly during render (React's recommended alternative to an
+  // effect-driven initial-state setState) rather than in an effect.
+  if (entities.length > 0 && !selectedRoute) {
+    const firstEntity = entities[0]
+    setSelectedRoute({
+      entityId: firstEntity.id,
+      method: 'GET',
+      pathTemplate: `/api/${firstEntity.name.toLowerCase()}`
+    })
+  }
+
+  const selectedEntity = selectedRoute ? entities.find((e) => e.id === selectedRoute.entityId) : undefined
+  const selectedRowCount = selectedRoute ? (generatedData[selectedRoute.entityId] || []).length : 0
+
+  // Populate the request form whenever the selected route (or the
+  // availability of sample rows for it) changes. Same render-time reset
+  // pattern used above/in FieldModal, keyed on everything the form derives
+  // from, instead of an effect that calls setState synchronously.
+  const routeFormKey = selectedRoute
+    ? `${selectedRoute.entityId}:${selectedRoute.method}:${selectedRoute.pathTemplate}:${selectedRowCount}`
+    : null
+  const [lastRouteFormKey, setLastRouteFormKey] = useState<string | null>(null)
+
+  if (routeFormKey !== null && routeFormKey !== lastRouteFormKey && selectedRoute && selectedEntity) {
+    setLastRouteFormKey(routeFormKey)
+    setMethod(selectedRoute.method)
+
+    let initialPath = `/api/${selectedEntity.name.toLowerCase()}`
+    if (selectedRoute.pathTemplate.includes('/:id')) {
+      const rows = generatedData[selectedEntity.id] || []
+      const sampleId = rows[0]?.id || 'sample-uuid-1234'
+      initialPath = `/api/${selectedEntity.name.toLowerCase()}/${sampleId}`
     }
-  }, [entities, selectedRoute])
+    setPath(initialPath)
 
-  // Track selected route changes and populate inputs
-  useEffect(() => {
-    if (selectedRoute) {
-      const entity = entities.find((e) => e.id === selectedRoute.entityId)
-      if (!entity) return
-
-      setMethod(selectedRoute.method)
-      
-      let initialPath = `/api/${entity.name.toLowerCase()}`
-      if (selectedRoute.pathTemplate.includes('/:id')) {
-        const rows = generatedData[entity.id] || []
-        const sampleId = rows[0]?.id || 'sample-uuid-1234'
-        initialPath = `/api/${entity.name.toLowerCase()}/${sampleId}`
-      }
-      setPath(initialPath)
-
-      // Generate body template for POST requests
-      if (selectedRoute.method === 'POST') {
-        const templateObj: Record<string, any> = {}
-        for (const field of entity.fields) {
-          switch (field.type) {
-            case 'uuid':
-              templateObj[field.name] = crypto.randomUUID()
-              break
-            case 'email':
-              templateObj[field.name] = 'dev@example.com'
-              break
-            case 'number':
-              templateObj[field.name] = field.name.toLowerCase().includes('age') ? 30 : 100
-              break
-            case 'currency':
-              templateObj[field.name] = 29.99
-              break
-            case 'date':
-              templateObj[field.name] = new Date().toISOString().split('T')[0]
-              break
-            case 'boolean':
-              templateObj[field.name] = true
-              break
-            case 'enum':
-              templateObj[field.name] = field.options?.[0] || 'option'
-              break
-            case 'foreign_key': {
-              const refRows = field.referenceEntityId ? (generatedData[field.referenceEntityId] || []) : []
-              templateObj[field.name] = refRows[0]?.id || 'sample-parent-uuid'
-              break
-            }
-            case 'string':
-            default:
-              templateObj[field.name] = field.name.toLowerCase().includes('name') ? 'John Doe' : 'lorem'
-              break
+    // Generate body template for POST requests
+    if (selectedRoute.method === 'POST') {
+      const templateObj: Record<string, any> = {}
+      for (const field of selectedEntity.fields) {
+        switch (field.type) {
+          case 'uuid':
+            templateObj[field.name] = crypto.randomUUID()
+            break
+          case 'email':
+            templateObj[field.name] = 'dev@example.com'
+            break
+          case 'number':
+            templateObj[field.name] = field.name.toLowerCase().includes('age') ? 30 : 100
+            break
+          case 'currency':
+            templateObj[field.name] = 29.99
+            break
+          case 'date':
+            templateObj[field.name] = new Date().toISOString().split('T')[0]
+            break
+          case 'boolean':
+            templateObj[field.name] = true
+            break
+          case 'enum':
+            templateObj[field.name] = field.options?.[0] || 'option'
+            break
+          case 'foreign_key': {
+            const refRows = field.referenceEntityId ? (generatedData[field.referenceEntityId] || []) : []
+            templateObj[field.name] = refRows[0]?.id || 'sample-parent-uuid'
+            break
           }
+          case 'string':
+          default:
+            templateObj[field.name] = field.name.toLowerCase().includes('name') ? 'John Doe' : 'lorem'
+            break
         }
-        setBodyInput(JSON.stringify(templateObj, null, 2))
-        setBodyError('')
-      } else {
-        setBodyInput('')
-        setBodyError('')
       }
-      // Reset old response
-      setResponse(null)
+      setBodyInput(JSON.stringify(templateObj, null, 2))
+      setBodyError('')
+    } else {
+      setBodyInput('')
+      setBodyError('')
     }
-  }, [selectedRoute, entities, generatedData])
+    // Reset old response
+    setResponse(null)
+  }
 
   if (entities.length === 0) {
     return (

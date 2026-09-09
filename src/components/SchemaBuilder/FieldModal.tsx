@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { X } from 'lucide-react'
 import { useSynqStore } from '../../store/useSynqStore'
 import type { SchemaField } from '../../store/useSynqStore'
@@ -23,24 +23,27 @@ export default function FieldModal({ isOpen, onClose, entityId, fieldIdToEdit }:
   const [referenceEntityId, setReferenceEntityId] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  // Populate data when editing
-  useEffect(() => {
-    if (isOpen) {
-      if (isEditMode && fieldToEdit) {
-        setName(fieldToEdit.name)
-        setType(fieldToEdit.type)
-        setOptionsRaw(fieldToEdit.options?.join(', ') || '')
-        setReferenceEntityId(fieldToEdit.referenceEntityId || '')
-        setErrors({})
-      } else {
-        setName('')
-        setType('string')
-        setOptionsRaw('')
-        setReferenceEntityId(entities.find(e => e.id !== entityId)?.id || '')
-        setErrors({})
-      }
+  // Populate the form whenever the modal opens for a (possibly different)
+  // field. Adjusted during render instead of via an effect: React docs
+  // recommend this "reset on prop change" pattern over an effect + extra
+  // render, and it avoids a setState-in-effect lint warning.
+  const openKey = isOpen ? `${entityId}:${fieldIdToEdit ?? 'new'}` : null
+  const [lastOpenKey, setLastOpenKey] = useState<string | null>(null)
+  if (openKey !== null && openKey !== lastOpenKey) {
+    setLastOpenKey(openKey)
+    if (isEditMode && fieldToEdit) {
+      setName(fieldToEdit.name)
+      setType(fieldToEdit.type)
+      setOptionsRaw(fieldToEdit.options?.join(', ') || '')
+      setReferenceEntityId(fieldToEdit.referenceEntityId || '')
+    } else {
+      setName('')
+      setType('string')
+      setOptionsRaw('')
+      setReferenceEntityId(entities.find((e) => e.id !== entityId)?.id || '')
     }
-  }, [isOpen, isEditMode, fieldToEdit, entities, entityId])
+    setErrors({})
+  }
 
   if (!isOpen || !parentEntity) return null
 
