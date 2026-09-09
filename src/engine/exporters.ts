@@ -1,5 +1,5 @@
 import type { Entity } from '../store/useSynqStore'
-import { getGenerationOrder } from './dataGenerator'
+import { getGenerationOrder } from './schemaGraph'
 
 /**
  * Triggers a browser file download using a generated URL Blob.
