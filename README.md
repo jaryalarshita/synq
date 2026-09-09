@@ -6,6 +6,18 @@ Built with **React, Vite, and Zustand**, Synq features a premium dark-mode, glas
 
 ---
 
+## 📸 Screenshot
+
+> **TODO:** run `npm run dev`, capture the Schema Builder / Data Preview / API
+> Sandbox views, save the image to `docs/screenshot.png`, then uncomment the
+> line below.
+
+<!-- ![Synq — Schema Builder, Data Preview, and API Mock Sandbox](docs/screenshot.png) -->
+
+
+
+---
+
 ## 🚀 Features
 
 ### 1. Visual Schema Builder
@@ -34,6 +46,11 @@ Built with **React, Vite, and Zustand**, Synq features a premium dark-mode, glas
   * `POST /api/[entity]` (validates JSON payload format/types, injects new UUID, appends records to local state, and returns `201 Created`)
 * **Timing & Latency**: Simulates network response times (80ms - 240ms delay) using performance timers.
 * **Code Generator**: Dynamically outputs integration code snippets for **cURL** and JavaScript **`fetch()`** matching the selected endpoint parameters.
+
+### 5. Workspace Persistence & Responsive UI
+* **Session Persistence**: Schemas and generated datasets are saved to `localStorage`, so a refresh restores your workspace.
+* **Responsive Layout**: Breakpoints collapse the side-by-side panes into stacked columns on tablets, and reduce the navigation to icons on small screens.
+* **Deferred Loading**: The Faker engine is code-split into its own chunk and fetched only when you generate data, keeping the initial bundle at ~185 kB.
 
 ---
 
@@ -72,6 +89,16 @@ Built with **React, Vite, and Zustand**, Synq features a premium dark-mode, glas
    npm run build
    ```
 
+### Testing & Linting
+```bash
+npm test        # Run the Vitest suite once
+npm run test:watch
+npm run lint
+```
+The suite covers the generator engine (topological ordering, cycle detection, FK
+integrity), the mock API server, the exporters, the Zustand store, and the
+Schema Builder / Data Grid / API Sandbox UI.
+
 ---
 
 ## 📂 Project Structure
@@ -95,11 +122,13 @@ synq/
 │   │       ├── EndpointRunner.tsx
 │   │       └── CodeSnippet.tsx
 │   ├── engine/
-│   │   ├── dataGenerator.ts    # Topological sorting & Faker engine
+│   │   ├── schemaGraph.ts      # Foreign-key topological sort & cycle detection
+│   │   ├── dataGenerator.ts    # Faker-backed record engine (lazy-loaded)
 │   │   ├── mockApiServer.ts    # REST route parser & payload validator
-│   │   └── exporters.ts        # CSV, JSON, SQL file download builders
+│   │   ├── exporters.ts        # CSV, JSON, SQL file download builders
+│   │   └── codeGenerators.ts   # cURL / fetch() snippet builders
 │   └── store/
-│       └── useSynqStore.ts     # Central Zustand state store
+│       └── useSynqStore.ts     # Central Zustand state store (localStorage-persisted)
 ├── index.html           # Document wrapper root
 ├── tsconfig.json        # Compiler parameters
 ├── vite.config.ts       # Bundler definitions
