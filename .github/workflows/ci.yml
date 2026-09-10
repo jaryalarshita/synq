@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Cancel superseded runs on the same branch instead of queueing them up.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Lint, test, build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # @vitejs/plugin-react has not declared Vite 8 in its peer range yet, so
+      # a plain `npm ci` fails with ERESOLVE. Matches the README's install step.
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      # --max-warnings=0 keeps the suite at zero warnings; without it, ESLint
+      # exits 0 on warnings and regressions would slip through unnoticed.
+      - name: Lint
+        run: npm run lint -- --max-warnings=0
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
