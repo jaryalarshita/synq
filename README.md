@@ -1,5 +1,7 @@
 # Synq — Serverless Synthetic Data Engine & API Mocker
 
+[![CI](https://github.com/jaryalarshita/synq/actions/workflows/ci.yml/badge.svg)](https://github.com/jaryalarshita/synq/actions/workflows/ci.yml)
+
 **Synq** is a high-performance, serverless developer tool that runs entirely in the browser. It lets you visually define relational database schemas, generate thousands of realistic synthetic records with cascading foreign-key integrity, preview and filter data inside an interactive grid, export schemas/datasets in multiple formats, and test mock REST API endpoints using a built-in request runner—all without any backend server.
 
 Built with **React, Vite, and Zustand**, Synq features a premium dark-mode, glassmorphic layout optimized for technical developer workflows.
