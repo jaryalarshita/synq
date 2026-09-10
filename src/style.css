@@ -1596,17 +1596,29 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--spacing-md);
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
   padding: var(--spacing-sm) var(--spacing-md);
 }
 
+/* Keeps the Copy button visible when the tab strip scrolls */
+.copy-snippet-btn {
+  flex-shrink: 0;
+}
+
 .snippet-tabs {
   display: flex;
   gap: var(--spacing-xs);
+  /* Five languages overflow narrow panels, so the strip scrolls instead */
+  overflow-x: auto;
+  scrollbar-width: thin;
+  min-width: 0;
 }
 
 .snippet-tab {
+  flex-shrink: 0;
+  white-space: nowrap;
   background: transparent;
   border: none;
   color: var(--text-muted);

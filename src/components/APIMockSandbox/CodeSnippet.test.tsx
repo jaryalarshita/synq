@@ -64,3 +64,42 @@ describe('CodeSnippet', () => {
     expect(writeText).toHaveBeenCalledWith(expect.stringContaining('fetch('))
   })
 })
+
+describe('CodeSnippet — language tabs', () => {
+  it('offers a tab for every supported language', () => {
+    render(<CodeSnippet method="GET" path="/api/users" />)
+
+    for (const label of ['cURL', 'JavaScript (Fetch)', 'Axios', 'Python', 'Rust']) {
+      expect(screen.getByText(label)).toBeInTheDocument()
+    }
+  })
+
+  it('shows the Python snippet when its tab is chosen', async () => {
+    const user = userEvent.setup()
+    render(<CodeSnippet method="GET" path="/api/users" />)
+
+    await user.click(screen.getByText('Python'))
+
+    expect(screen.getByText(/import requests/)).toBeInTheDocument()
+    expect(screen.queryByText(/curl -X GET/)).not.toBeInTheDocument()
+  })
+
+  it('shows the Rust snippet when its tab is chosen', async () => {
+    const user = userEvent.setup()
+    render(<CodeSnippet method="GET" path="/api/users" />)
+
+    await user.click(screen.getByText('Rust'))
+
+    expect(screen.getByText(/tokio::main/)).toBeInTheDocument()
+  })
+
+  it('copies whichever language is active', async () => {
+    const user = setupWithClipboard()
+    render(<CodeSnippet method="GET" path="/api/users" />)
+
+    await user.click(screen.getByText('Axios'))
+    await user.click(screen.getByText('Copy'))
+
+    expect(writeText).toHaveBeenCalledWith(expect.stringContaining("import axios from 'axios';"))
+  })
+})
