@@ -4,6 +4,10 @@ import { getGenerationOrder } from './schemaGraph'
 /**
  * Triggers a browser file download using a generated URL Blob.
  */
+export function exportToFile(content: string, fileName: string, mimeType: string) {
+  triggerFileDownload(content, fileName, mimeType)
+}
+
 function triggerFileDownload(content: string, fileName: string, mimeType: string) {
   const blob = new Blob([content], { type: mimeType })
   const url = URL.createObjectURL(blob)

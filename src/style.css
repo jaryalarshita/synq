@@ -1063,7 +1063,8 @@ body {
 /* Export Modal Selector UI */
 .export-format-selector {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  /* Four formats: two rows of two rather than a cramped single row */
+  grid-template-columns: repeat(2, 1fr);
   gap: var(--spacing-sm);
   margin-top: var(--spacing-xs);
 }
