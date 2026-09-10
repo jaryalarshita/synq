@@ -712,6 +712,25 @@ body {
   line-height: 1.4;
 }
 
+/* Paired numeric inputs for distribution settings */
+.dist-input-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-md);
+}
+
+.dist-input {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  min-width: 0;
+}
+
+.dist-input label {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
 .warning-box {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid var(--border-color);
