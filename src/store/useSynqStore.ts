@@ -71,6 +71,9 @@ export interface RequestLogEntry {
  */
 export const MAX_REQUEST_LOG_ENTRIES = 500
 
+/** Workspace tabs, persisted so a reload returns you where you left off. */
+export type WorkspaceTab = 'schema' | 'data' | 'api' | 'observability'
+
 /** Mirrors the pre-chaos behaviour: an 80-240ms delay and no injected errors. */
 export const DEFAULT_CHAOS_CONFIG: ChaosConfig = {
   enabled: false,
@@ -99,6 +102,8 @@ interface SynqState {
   requestLog: RequestLogEntry[]
   logRequest: (entry: Omit<RequestLogEntry, 'id' | 'timestamp'>) => void
   clearRequestLog: () => void
+  activeTab: WorkspaceTab
+  setActiveTab: (tab: WorkspaceTab) => void
 }
 
 export const useSynqStore = create<SynqState>()(
@@ -242,6 +247,9 @@ export const useSynqStore = create<SynqState>()(
 
       clearRequestLog: () => set({ requestLog: [] }),
 
+      activeTab: 'schema',
+      setActiveTab: (tab) => set({ activeTab: tab }),
+
       setGeneratedData: (data) => set({ generatedData: data }),
       clearGeneratedData: () => set({ generatedData: {} }),
       setIsGenerating: (isGenerating) => set({ isGenerating }),
@@ -259,7 +267,8 @@ export const useSynqStore = create<SynqState>()(
         entities: state.entities,
         generatedData: state.generatedData,
         chaosConfig: state.chaosConfig,
-        requestLog: state.requestLog
+        requestLog: state.requestLog,
+        activeTab: state.activeTab
       })
     }
   )

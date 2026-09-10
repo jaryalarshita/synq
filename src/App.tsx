@@ -8,14 +8,15 @@ import TrafficDashboard from './components/Observability/TrafficDashboard'
 import { useSynqStore } from './store/useSynqStore'
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'schema' | 'data' | 'api' | 'observability'>('schema')
   const {
     entities,
     generatedData,
     isGenerating,
     setGeneratedData,
     clearGeneratedData,
-    setIsGenerating
+    setIsGenerating,
+    activeTab,
+    setActiveTab
   } = useSynqStore()
 
   const [recordCount, setRecordCount] = useState(100)

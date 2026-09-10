@@ -20,6 +20,10 @@
   --accent-disabled: #333333;
   --danger-color: #ff4d4d;
   --success-color: #2ebd59;
+  /* Chaos Studio stays within the monochrome system: no hue, just contrast */
+  --chaos-accent: var(--text-primary);
+  --chaos-accent-soft: rgba(255, 255, 255, 0.18);
+  --chaos-accent-border: rgba(255, 255, 255, 0.35);
   
   /* Layout & Spacing */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -1336,7 +1340,7 @@ body {
 }
 
 .chaos-icon-active {
-  color: #e0b341;
+  color: var(--chaos-accent);
 }
 
 .chaos-header-meta {
@@ -1392,13 +1396,13 @@ body {
 }
 
 .chaos-switch input:checked + .chaos-switch-track {
-  background: rgba(224, 179, 65, 0.25);
-  border-color: rgba(224, 179, 65, 0.5);
+  background: var(--chaos-accent-soft);
+  border-color: var(--chaos-accent-border);
 }
 
 .chaos-switch input:checked + .chaos-switch-track::after {
   transform: translateX(14px);
-  background: #e0b341;
+  background: var(--chaos-accent);
 }
 
 .chaos-switch input:focus-visible + .chaos-switch-track {
@@ -1472,7 +1476,8 @@ body {
 
 .chaos-slider-row input[type='range'] {
   width: 100%;
-  accent-color: #e0b341;
+  /* White reads better than pink on the track at this size */
+  accent-color: var(--accent-primary);
   cursor: pointer;
 }
 
@@ -1481,16 +1486,61 @@ body {
   opacity: 0.4;
 }
 
-.chaos-slider-value {
+/* Typed value entry beside each slider, for exact numbers */
+.chaos-value-field {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  justify-content: flex-end;
+}
+
+.chaos-value-input {
+  width: 46px;
+  padding: 3px 4px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-primary);
   font-family: var(--font-mono);
   font-size: 11px;
-  color: var(--text-secondary);
   text-align: right;
+  /* Spinners steal width at this size and duplicate the slider's job */
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.chaos-value-input::-webkit-outer-spin-button,
+.chaos-value-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.chaos-value-input:focus {
+  outline: none;
+  border-color: var(--chaos-accent-border);
+}
+
+.chaos-value-input:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.chaos-value-unit {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+/* Themed focus ring: the browser default rendered as an off-palette orange */
+:where(button, a, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--chaos-accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
 }
 
 .chaos-warning {
   font-size: 11px;
-  color: #e0b341;
+  color: var(--chaos-accent);
   margin: 0;
 }
 
@@ -1563,6 +1613,9 @@ body {
 
 .path-input {
   flex: 1;
+  /* Without min-width:0 a flex item refuses to shrink below its content
+     width, which pushed the Send button outside the bar on narrow screens. */
+  min-width: 0;
   background: transparent !important;
   border: none !important;
   font-family: var(--font-mono);
@@ -1574,6 +1627,7 @@ body {
 
 .send-btn {
   padding: 8px var(--spacing-lg);
+  flex-shrink: 0;
 }
 
 .payload-textarea {
@@ -2054,10 +2108,12 @@ body {
   transition: width 0.25s ease;
 }
 
-.status-family-success { background: var(--success-color); }
-.status-family-client { background: #e0b341; }
-.status-family-server { background: var(--danger-color); }
-.status-family-other { background: var(--text-muted); }
+/* Distinguished by lightness rather than hue, to stay monochrome. The
+   legend labels each family, so contrast alone is enough to read the bar. */
+.status-family-success { background: var(--text-primary); }
+.status-family-client { background: var(--text-secondary); }
+.status-family-server { background: var(--text-muted); }
+.status-family-other { background: var(--accent-disabled); }
 
 .status-legend {
   list-style: none;
