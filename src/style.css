@@ -634,6 +634,10 @@ body {
   padding: var(--spacing-lg);
   border-radius: var(--radius-lg);
   background: var(--bg-secondary);
+  /* The field modal grew tall with the distribution controls; without this it
+     overflows past the top of the viewport on short screens, unreachable. */
+  max-height: calc(100vh - var(--spacing-xl));
+  overflow-y: auto;
 }
 
 .modal-header {
@@ -2054,6 +2058,19 @@ body {
   align-items: flex-end;
   gap: var(--spacing-sm);
   height: 140px;
+}
+
+/* Seven fixed bands cannot compress indefinitely; below this the chart
+   scrolls sideways instead of crushing the axis labels together. */
+@media (max-width: 560px) {
+  .histogram {
+    overflow-x: auto;
+    gap: var(--spacing-xs);
+  }
+
+  .histogram-column {
+    min-width: 42px;
+  }
 }
 
 .histogram-column {
