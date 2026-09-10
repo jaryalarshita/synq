@@ -112,6 +112,83 @@ describe('generateSyntheticData', () => {
     }
   })
 
+  it('applies a uniform distribution to a number field, overriding name heuristics', () => {
+    // Named "age" so the 18-80 heuristic would otherwise apply.
+    const users = entity('Users', [
+      field({ name: 'age', type: 'number', distribution: { kind: 'uniform', min: 200, max: 300 } })
+    ])
+
+    const data = generateSyntheticData([users], 100)
+
+    for (const row of data[users.id]) {
+      expect(row.age).toBeGreaterThanOrEqual(200)
+      expect(row.age).toBeLessThanOrEqual(300)
+      expect(Number.isInteger(row.age)).toBe(true)
+    }
+  })
+
+  it('clusters a normal-distributed number field around its mean', () => {
+    const users = entity('Users', [
+      field({ name: 'score', type: 'number', distribution: { kind: 'normal', mean: 500, stdDev: 20 } })
+    ])
+
+    const rows = generateSyntheticData([users], 500)[users.id]
+    const mean = rows.reduce((sum, r) => sum + r.score, 0) / rows.length
+
+    expect(mean).toBeGreaterThan(490)
+    expect(mean).toBeLessThan(510)
+  })
+
+  it('keeps two decimal places for a distributed currency field', () => {
+    const products = entity('Products', [
+      field({ name: 'price', type: 'currency', distribution: { kind: 'uniform', min: 10, max: 20 } })
+    ])
+
+    for (const row of generateSyntheticData([products], 50)[products.id]) {
+      expect(row.price).toBeGreaterThanOrEqual(10)
+      expect(row.price).toBeLessThanOrEqual(20)
+      expect(Math.round(row.price * 100)).toBeCloseTo(row.price * 100, 6)
+    }
+  })
+
+  it('respects enum weights, favouring the heavily weighted option', () => {
+    const users = entity('Users', [
+      field({ name: 'role', type: 'enum', options: ['admin', 'user'], weights: [95, 5] })
+    ])
+
+    const rows = generateSyntheticData([users], 1000)[users.id]
+    const adminShare = rows.filter((r) => r.role === 'admin').length / rows.length
+
+    expect(adminShare).toBeGreaterThan(0.88)
+    expect(adminShare).toBeLessThan(0.99)
+  })
+
+  it('never emits a zero-weighted enum option', () => {
+    const users = entity('Users', [
+      field({ name: 'tier', type: 'enum', options: ['free', 'pro', 'legacy'], weights: [50, 50, 0] })
+    ])
+
+    const rows = generateSyntheticData([users], 300)[users.id]
+    expect(rows.some((r) => r.tier === 'legacy')).toBe(false)
+  })
+
+  it('generates strings matching a configured regex pattern', () => {
+    const users = entity('Users', [
+      field({ name: 'sku', type: 'string', pattern: '[A-Z]{3}-[0-9]{4}' })
+    ])
+
+    for (const row of generateSyntheticData([users], 30)[users.id]) {
+      expect(row.sku).toMatch(/^[A-Z]{3}-[0-9]{4}$/)
+    }
+  })
+
+  it('returns null rather than throwing when a regex pattern is invalid', () => {
+    const users = entity('Users', [field({ name: 'code', type: 'string', pattern: '[unclosed' })])
+
+    const rows = generateSyntheticData([users], 5)[users.id]
+    expect(rows.every((r) => r.code === null)).toBe(true)
+  })
+
   it('propagates the circular reference error instead of generating data', () => {
     const a = entity('A')
     const b = entity('B')

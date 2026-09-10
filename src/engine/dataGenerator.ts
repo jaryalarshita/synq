@@ -1,6 +1,7 @@
 import { faker } from '@faker-js/faker'
 import type { Entity, SchemaField } from '../store/useSynqStore'
 import { getGenerationOrder } from './schemaGraph'
+import { sampleDistribution, pickWeightedIndex } from './distributions'
 
 // Re-exported so the generator remains the single entry point for callers
 // that want both ordering and generation.
@@ -23,6 +24,10 @@ function generateFieldValue(
       return faker.internet.email().toLowerCase()
 
     case 'number':
+      // An explicit distribution wins over the name-based heuristics below.
+      if (field.distribution) {
+        return Math.round(sampleDistribution(field.distribution))
+      }
       if (nameLower.includes('age')) {
         return faker.number.int({ min: 18, max: 80 })
       }
@@ -35,6 +40,10 @@ function generateFieldValue(
       return faker.number.int({ min: 1, max: 99999 })
 
     case 'currency':
+      if (field.distribution) {
+        // Currency keeps two decimal places rather than rounding to an integer.
+        return Math.round(sampleDistribution(field.distribution) * 100) / 100
+      }
       return parseFloat(faker.finance.amount({ min: 5, max: 2000, dec: 2 }))
 
     case 'date':
@@ -46,7 +55,8 @@ function generateFieldValue(
 
     case 'enum':
       if (field.options && field.options.length > 0) {
-        const index = faker.number.int({ min: 0, max: field.options.length - 1 })
+        // Weighted when configured, otherwise an even pick across the options.
+        const index = pickWeightedIndex(field.weights, field.options.length)
         return field.options[index]
       }
       return null
@@ -66,6 +76,18 @@ function generateFieldValue(
 
     case 'string':
     default:
+      // A configured pattern takes priority over the name-based heuristics.
+      if (field.pattern) {
+        // Faker echoes a malformed pattern back verbatim rather than throwing,
+        // which would fill the column with literal regex source. Validate it
+        // first so a bad pattern yields NULL — an obvious signal in the grid.
+        try {
+          new RegExp(field.pattern)
+        } catch {
+          return null
+        }
+        return faker.helpers.fromRegExp(field.pattern)
+      }
       if (nameLower.includes('username') || nameLower.includes('handle')) {
         return faker.internet.username()
       }

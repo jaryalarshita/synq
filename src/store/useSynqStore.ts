@@ -1,12 +1,33 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
+/**
+ * How numeric values are sampled. `uniform` spreads evenly across the range;
+ * `normal` clusters around a mean with the given standard deviation.
+ */
+export type DistributionKind = 'uniform' | 'normal'
+
+export interface NumericDistribution {
+  kind: DistributionKind
+  /** Bounds for `uniform`, and the clamp applied to `normal` samples. */
+  min?: number
+  max?: number
+  mean?: number
+  stdDev?: number
+}
+
 export interface SchemaField {
   id: string
   name: string
   type: 'uuid' | 'string' | 'email' | 'number' | 'currency' | 'date' | 'boolean' | 'enum' | 'foreign_key'
   options?: string[]
   referenceEntityId?: string
+  /** number/currency only: overrides the default name-based heuristics. */
+  distribution?: NumericDistribution
+  /** enum only: relative pick weights, positionally matched to `options`. */
+  weights?: number[]
+  /** string only: a regex the generated value must match. */
+  pattern?: string
 }
 
 export interface Entity {
