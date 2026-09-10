@@ -14,7 +14,8 @@ beforeEach(() => {
     generatedData: {},
     isGenerating: false,
     chaosConfig: DEFAULT_CHAOS_CONFIG,
-    requestLog: []
+    requestLog: [],
+    activeTab: 'schema'
   })
 })
 
@@ -258,5 +259,24 @@ describe('useSynqStore request log', () => {
     useSynqStore.getState().clearRequestLog()
 
     expect(useSynqStore.getState().requestLog).toEqual([])
+  })
+})
+
+describe('useSynqStore active tab', () => {
+  it('starts on the schema builder', () => {
+    expect(useSynqStore.getState().activeTab).toBe('schema')
+  })
+
+  it('remembers the selected tab', () => {
+    useSynqStore.getState().setActiveTab('observability')
+
+    expect(useSynqStore.getState().activeTab).toBe('observability')
+  })
+
+  it('is included in the persisted slice so a reload restores it', () => {
+    useSynqStore.getState().setActiveTab('api')
+
+    const persisted = JSON.parse(localStorage.getItem('synq-storage') || '{}')
+    expect(persisted.state.activeTab).toBe('api')
   })
 })
