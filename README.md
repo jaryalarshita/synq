@@ -76,6 +76,70 @@ Built with **React, Vite, and Zustand**, Synq features a premium dark-mode, glas
 
 ---
 
+## 🧠 Design Notes
+
+The interesting parts of this project are the constraints, not the feature list.
+
+### Generating relational data requires solving dependency order first
+If `Orders.userId` must reference a real `Users.id`, users have to be generated before
+orders — and with arbitrary user-defined schemas, that ordering isn't known ahead of time.
+The generator builds a dependency graph from the foreign-key fields and runs a
+**topological sort** over it, so every parent is always materialised before its children.
+The same traversal detects **circular references** (`A → B → A`) and surfaces the cycle by
+name rather than hanging or producing orphans. That ordering is reused by the SQL exporter,
+where `INSERT` statements must satisfy the same constraint to be valid.
+
+### Realistic data means controlling distribution, not just randomness
+Uniformly random numbers don't look like real data: ages cluster, roles skew heavily toward
+ordinary users, and product codes follow a format. The engine supports **uniform** and
+**normal** distributions, weighted enum selection, and regex-constrained strings. The
+Gaussian sampling uses the **Box–Muller transform** — two uniform draws become one
+standard-normal value — which meant no statistics dependency was needed. Normal samples are
+unbounded by nature, so optional clamps keep an "age" column from going negative.
+
+### Faults must be simulatable without being destructive
+The chaos engine injects latency and HTTP failures, but it does so **before routing** — an
+injected `500` short-circuits the request rather than half-applying it, so a simulated
+failure can never mutate generated data. Error rates are laid end to end on a 0–100 line, so
+`10/5/0` reads as "10% server errors, 5% rate limits, 85% success" rather than three
+independent rolls that interact confusingly.
+
+### Randomness is injectable, so chaos is testable
+Anything driven by `Math.random` is untestable by default. The mock server and the sampling
+helpers accept an optional RNG, defaulting to `Math.random` in production and taking a fixed
+sequence under test. That's what makes assertions like "a 100% error rate always injects"
+and "these weights produce this distribution" possible at all.
+
+### Deferring one module cut the initial bundle by two thirds
+Faker accounted for most of the initial bundle, despite only being needed when the user
+actually clicks *Generate Data*. Moving it behind a **dynamic import** took the entry chunk
+from 601 kB to 185 kB at the time; it sits around 208 kB today after three further
+milestones, with Faker's ~420 kB still loaded only on demand. The split required extracting
+the faker-free dependency-graph logic into its own module first — otherwise the SQL exporter,
+which only needs the topological sort, would have dragged the entire data library back into
+the main chunk.
+
+### Three charts did not justify a charting library
+The observability dashboard needs a line chart, a histogram, and a proportion bar. A charting
+dependency would have added roughly 100 kB — more than half the size of the rest of the app —
+so the charts are **hand-authored SVG and CSS**, costing about 8 kB. The aggregation logic
+(bucketing, percentiles, throughput windows) lives in a separate module from the components,
+so the maths is unit-tested directly rather than through the DOM.
+
+### State that resets on prop change doesn't need an effect
+Several components originally synced state inside `useEffect`, which triggers a second render
+pass and is flagged by React's own lint rules. They now use **key-based remounts** or
+adjust state during render, following React's documented alternatives. CI enforces
+`--max-warnings=0`, so this class of pattern can't quietly return.
+
+### Zero backend is a product decision, not a limitation
+Everything runs client-side and persists to `localStorage`. That's what allows the tool to
+start instantly with no account, and it means synthetic data — and any schema modelled on
+something real — never leaves the machine. Adding a server would trade that away for
+capabilities this version doesn't need.
+
+---
+
 ## 🏁 Getting Started
 
 ### Prerequisites
