@@ -125,3 +125,97 @@ describe('ChaosPanel', () => {
     expect(useSynqStore.getState().chaosConfig).toEqual(DEFAULT_CHAOS_CONFIG)
   })
 })
+
+describe('ChaosPanel — typed value entry', () => {
+  it('shows an editable input beside each slider', async () => {
+    const user = userEvent.setup()
+    render(<ChaosPanel />)
+    await expand(user)
+
+    // Targeted by id: the slider and the number field share a value, so a
+    // display-value lookup would match both.
+    const minInput = document.getElementById('chaos-latency-min-input') as HTMLInputElement
+    const maxInput = document.getElementById('chaos-latency-max-input') as HTMLInputElement
+    expect(minInput.value).toBe(String(DEFAULT_CHAOS_CONFIG.latencyMin))
+    expect(maxInput.value).toBe(String(DEFAULT_CHAOS_CONFIG.latencyMax))
+  })
+
+  it('commits a typed latency on Enter', async () => {
+    const user = userEvent.setup()
+    useSynqStore.setState({ chaosConfig: { ...DEFAULT_CHAOS_CONFIG, enabled: true } })
+    render(<ChaosPanel />)
+    await expand(user)
+
+    const input = document.getElementById('chaos-latency-max-input') as HTMLInputElement
+    await user.clear(input)
+    await user.type(input, '1750{Enter}')
+
+    expect(useSynqStore.getState().chaosConfig.latencyMax).toBe(1750)
+  })
+
+  it('commits a typed value on blur as well', async () => {
+    const user = userEvent.setup()
+    useSynqStore.setState({ chaosConfig: { ...DEFAULT_CHAOS_CONFIG, enabled: true } })
+    render(<ChaosPanel />)
+    await expand(user)
+
+    const input = document.getElementById('chaos-latency-min-input') as HTMLInputElement
+    await user.clear(input)
+    await user.type(input, '120')
+    await user.tab()
+
+    expect(useSynqStore.getState().chaosConfig.latencyMin).toBe(120)
+  })
+
+  it('keeps the slider and the input in step', async () => {
+    const user = userEvent.setup()
+    useSynqStore.setState({ chaosConfig: { ...DEFAULT_CHAOS_CONFIG, enabled: true } })
+    render(<ChaosPanel />)
+    await expand(user)
+
+    fireEvent.change(screen.getByLabelText('Max'), { target: { value: '3200' } })
+
+    const input = document.getElementById('chaos-latency-max-input') as HTMLInputElement
+    expect(input.value).toBe('3200')
+  })
+
+  it('reverts an unusable entry rather than writing NaN', async () => {
+    const user = userEvent.setup()
+    useSynqStore.setState({ chaosConfig: { ...DEFAULT_CHAOS_CONFIG, enabled: true } })
+    render(<ChaosPanel />)
+    await expand(user)
+
+    const input = document.getElementById('chaos-latency-min-input') as HTMLInputElement
+    await user.clear(input)
+    await user.tab()
+
+    expect(useSynqStore.getState().chaosConfig.latencyMin).toBe(DEFAULT_CHAOS_CONFIG.latencyMin)
+    expect(input.value).toBe(String(DEFAULT_CHAOS_CONFIG.latencyMin))
+  })
+
+  it('clamps a typed value beyond the maximum', async () => {
+    const user = userEvent.setup()
+    useSynqStore.setState({ chaosConfig: { ...DEFAULT_CHAOS_CONFIG, enabled: true } })
+    render(<ChaosPanel />)
+    await expand(user)
+
+    const input = document.getElementById('chaos-latency-max-input') as HTMLInputElement
+    await user.clear(input)
+    await user.type(input, '99999{Enter}')
+
+    expect(useSynqStore.getState().chaosConfig.latencyMax).toBe(5000)
+  })
+
+  it('commits a typed error rate', async () => {
+    const user = userEvent.setup()
+    useSynqStore.setState({ chaosConfig: { ...DEFAULT_CHAOS_CONFIG, enabled: true } })
+    render(<ChaosPanel />)
+    await expand(user)
+
+    const input = document.getElementById('chaos-rate-500-input') as HTMLInputElement
+    await user.clear(input)
+    await user.type(input, '42{Enter}')
+
+    expect(useSynqStore.getState().chaosConfig.errorRates[500]).toBe(42)
+  })
+})

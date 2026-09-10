@@ -9,6 +9,65 @@ const ERROR_STATUSES: { status: ChaosErrorStatus; label: string }[] = [
   { status: 404, label: 'Not Found' }
 ]
 
+
+interface ValueFieldProps {
+  id: string
+  value: number
+  min: number
+  max: number
+  unit: string
+  disabled: boolean
+  onCommit: (value: number) => void
+}
+
+/**
+ * Numeric entry paired with a slider, for setting an exact value without
+ * dragging. Edits are held locally and committed on Enter or blur, so a
+ * half-typed number ("10" on the way to "1000") isn't clamped mid-keystroke.
+ */
+function ValueField({ id, value, min, max, unit, disabled, onCommit }: ValueFieldProps) {
+  const [draft, setDraft] = useState(String(value))
+
+  // Re-sync when the value changes elsewhere (slider drag, reset, clamping).
+  const [lastValue, setLastValue] = useState(value)
+  if (value !== lastValue) {
+    setLastValue(value)
+    setDraft(String(value))
+  }
+
+  const commit = () => {
+    const parsed = Number(draft)
+    if (draft.trim() === '' || Number.isNaN(parsed)) {
+      setDraft(String(value)) // revert an unusable entry
+      return
+    }
+    onCommit(parsed)
+  }
+
+  return (
+    <div className="chaos-value-field">
+      <input
+        id={id}
+        type="number"
+        className="chaos-value-input"
+        min={min}
+        max={max}
+        value={draft}
+        disabled={disabled}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault()
+            commit()
+          }
+        }}
+      />
+      <span className="chaos-value-unit">{unit}</span>
+    </div>
+  )
+}
+
 export default function ChaosPanel() {
   const { chaosConfig, updateChaosConfig, resetChaosConfig } = useSynqStore()
   const [isExpanded, setIsExpanded] = useState(false)
@@ -75,7 +134,15 @@ export default function ChaosPanel() {
                 disabled={!enabled}
                 onChange={(e) => updateChaosConfig({ latencyMin: Number(e.target.value) })}
               />
-              <span className="chaos-slider-value">{latencyMin} ms</span>
+              <ValueField
+                id="chaos-latency-min-input"
+                value={latencyMin}
+                min={0}
+                max={MAX_CHAOS_LATENCY_MS}
+                unit="ms"
+                disabled={!enabled}
+                onCommit={(next) => updateChaosConfig({ latencyMin: next })}
+              />
             </div>
             <div className="chaos-slider-row">
               <label htmlFor="chaos-latency-max">Max</label>
@@ -89,7 +156,15 @@ export default function ChaosPanel() {
                 disabled={!enabled}
                 onChange={(e) => updateChaosConfig({ latencyMax: Number(e.target.value) })}
               />
-              <span className="chaos-slider-value">{latencyMax} ms</span>
+              <ValueField
+                id="chaos-latency-max-input"
+                value={latencyMax}
+                min={0}
+                max={MAX_CHAOS_LATENCY_MS}
+                unit="ms"
+                disabled={!enabled}
+                onCommit={(next) => updateChaosConfig({ latencyMax: next })}
+              />
             </div>
           </div>
 
@@ -115,7 +190,17 @@ export default function ChaosPanel() {
                     })
                   }
                 />
-                <span className="chaos-slider-value">{errorRates[status]}%</span>
+                <ValueField
+                  id={`chaos-rate-${status}-input`}
+                  value={errorRates[status]}
+                  min={0}
+                  max={100}
+                  unit="%"
+                  disabled={!enabled}
+                  onCommit={(next) =>
+                    updateChaosConfig({ errorRates: { [status]: next } as any })
+                  }
+                />
               </div>
             ))}
             {totalErrorRate >= 100 && (
