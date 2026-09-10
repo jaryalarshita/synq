@@ -1794,6 +1794,11 @@ body {
     width: 100%;
     max-height: 220px;
   }
+
+  /* Charts stack rather than sharing a row */
+  .telemetry-charts {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 768px) {
@@ -1883,3 +1888,195 @@ body {
   }
 }
 
+
+/* ============================================
+   Observability Dashboard
+   ============================================ */
+
+.telemetry-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.stat-tile {
+  padding: var(--spacing-md) var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stat-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+}
+
+.stat-value {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.stat-sub {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.telemetry-charts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-lg);
+  align-items: start;
+}
+
+/* The throughput chart spans the full width; the other two share a row */
+.telemetry-charts > :first-child {
+  grid-column: 1 / -1;
+}
+
+.chart-card {
+  padding: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  min-width: 0;
+}
+
+.chart-empty-note {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.chart-axis-caption {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+/* Throughput line chart */
+.throughput-svg {
+  width: 100%;
+  height: 120px;
+  display: block;
+  overflow: visible;
+}
+
+.throughput-line {
+  fill: none;
+  stroke: var(--text-primary);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+
+.throughput-area {
+  fill: rgba(255, 255, 255, 0.07);
+  stroke: none;
+}
+
+/* Latency histogram */
+.histogram {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--spacing-sm);
+  height: 140px;
+}
+
+.histogram-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  height: 100%;
+}
+
+.histogram-bar-track {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+
+.histogram-bar {
+  width: 100%;
+  min-height: 2px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.15));
+  border-radius: 3px 3px 0 0;
+  transition: height 0.25s ease;
+}
+
+.histogram-count,
+.histogram-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.histogram-count {
+  color: var(--text-secondary);
+  min-height: 12px;
+}
+
+/* Status code breakdown */
+.status-stack {
+  display: flex;
+  height: 14px;
+  border-radius: 7px;
+  overflow: hidden;
+  background: var(--bg-tertiary);
+}
+
+.status-stack-segment {
+  height: 100%;
+  transition: width 0.25s ease;
+}
+
+.status-family-success { background: var(--success-color); }
+.status-family-client { background: #e0b341; }
+.status-family-server { background: var(--danger-color); }
+.status-family-other { background: var(--text-muted); }
+
+.status-legend {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin: 0;
+  padding: 0;
+}
+
+.status-legend li {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: 12px;
+}
+
+.status-legend-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.status-legend-family {
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+}
+
+.status-legend-count {
+  margin-left: auto;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}

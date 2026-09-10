@@ -28,7 +28,8 @@ beforeEach(() => {
   useSynqStore.setState({
     entities: [users],
     generatedData: { [users.id]: userRows },
-    chaosConfig: DEFAULT_CHAOS_CONFIG
+    chaosConfig: DEFAULT_CHAOS_CONFIG,
+    requestLog: []
   })
 })
 
@@ -140,6 +141,37 @@ describe('EndpointRunner request execution', () => {
       await screen.findByText('500 Internal Server Error', undefined, { timeout: 3000 })
     ).toBeInTheDocument()
     expect(screen.getByText(/injectedByChaos/)).toBeInTheDocument()
+  })
+
+  it('records each request in the telemetry log for the dashboard', async () => {
+    const user = userEvent.setup()
+    render(<EndpointRunner />)
+
+    await user.click(screen.getByText('Send'))
+    await screen.findByText('200 OK', undefined, { timeout: 3000 })
+
+    const log = useSynqStore.getState().requestLog
+    expect(log).toHaveLength(1)
+    expect(log[0]).toMatchObject({ method: 'GET', path: '/api/users', status: 200, injected: false })
+    expect(log[0].timeMs).toBeGreaterThanOrEqual(0)
+  })
+
+  it('flags a chaos-injected failure in the telemetry log', async () => {
+    const user = userEvent.setup()
+    useSynqStore.setState({
+      chaosConfig: {
+        enabled: true,
+        latencyMin: 0,
+        latencyMax: 0,
+        errorRates: { 500: 100, 429: 0, 404: 0 }
+      }
+    })
+    render(<EndpointRunner />)
+
+    await user.click(screen.getByText('Send'))
+    await screen.findByText('500 Internal Server Error', undefined, { timeout: 3000 })
+
+    expect(useSynqStore.getState().requestLog[0]).toMatchObject({ status: 500, injected: true })
   })
 
   it('persists a valid POST into the store and reports 201', async () => {
