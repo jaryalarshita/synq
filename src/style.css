@@ -20,9 +20,10 @@
   --accent-disabled: #333333;
   --danger-color: #ff4d4d;
   --success-color: #2ebd59;
-  --chaos-accent: #ff6b9d;
-  --chaos-accent-soft: rgba(255, 107, 157, 0.25);
-  --chaos-accent-border: rgba(255, 107, 157, 0.5);
+  /* Chaos Studio stays within the monochrome system: no hue, just contrast */
+  --chaos-accent: var(--text-primary);
+  --chaos-accent-soft: rgba(255, 255, 255, 0.18);
+  --chaos-accent-border: rgba(255, 255, 255, 0.35);
   
   /* Layout & Spacing */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -2107,10 +2108,12 @@ body {
   transition: width 0.25s ease;
 }
 
-.status-family-success { background: var(--success-color); }
-.status-family-client { background: #e0b341; }
-.status-family-server { background: var(--danger-color); }
-.status-family-other { background: var(--text-muted); }
+/* Distinguished by lightness rather than hue, to stay monochrome. The
+   legend labels each family, so contrast alone is enough to read the bar. */
+.status-family-success { background: var(--text-primary); }
+.status-family-client { background: var(--text-secondary); }
+.status-family-server { background: var(--text-muted); }
+.status-family-other { background: var(--accent-disabled); }
 
 .status-legend {
   list-style: none;
