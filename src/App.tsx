@@ -1,13 +1,14 @@
 import { useState } from 'react'
-import { Database, Table, Globe, HelpCircle, Eye, Sparkles, AlertCircle, Trash2, Loader2, Download } from 'lucide-react'
+import { Database, Table, Globe, Activity, HelpCircle, Eye, Sparkles, AlertCircle, Trash2, Loader2, Download } from 'lucide-react'
 import SchemaCanvas from './components/SchemaBuilder/SchemaCanvas'
 import DataGrid from './components/DataPreview/DataGrid'
 import ExportModal from './components/DataPreview/ExportModal'
 import EndpointRunner from './components/APIMockSandbox/EndpointRunner'
+import TrafficDashboard from './components/Observability/TrafficDashboard'
 import { useSynqStore } from './store/useSynqStore'
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'schema' | 'data' | 'api'>('schema')
+  const [activeTab, setActiveTab] = useState<'schema' | 'data' | 'api' | 'observability'>('schema')
   const {
     entities,
     generatedData,
@@ -75,6 +76,13 @@ export default function App() {
           >
             <Globe size={16} />
             <span>API Mock Sandbox</span>
+          </button>
+          <button
+            className={`nav-btn ${activeTab === 'observability' ? 'active' : ''}`}
+            onClick={() => setActiveTab('observability')}
+          >
+            <Activity size={16} />
+            <span>Observability</span>
           </button>
         </div>
         <div className="nav-actions">
@@ -230,6 +238,8 @@ export default function App() {
         )}
 
         {activeTab === 'api' && <EndpointRunner />}
+
+        {activeTab === 'observability' && <TrafficDashboard />}
       </main>
 
       {/* Export Modal overlay */}

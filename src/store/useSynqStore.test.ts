@@ -1,5 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { useSynqStore, DEFAULT_CHAOS_CONFIG, MAX_CHAOS_LATENCY_MS } from './useSynqStore'
+import {
+  useSynqStore,
+  DEFAULT_CHAOS_CONFIG,
+  MAX_CHAOS_LATENCY_MS,
+  MAX_REQUEST_LOG_ENTRIES
+} from './useSynqStore'
 
 // Reset the store (it's a module-level singleton) before every test so
 // state from one test can't leak into the next.
@@ -8,7 +13,8 @@ beforeEach(() => {
     entities: [],
     generatedData: {},
     isGenerating: false,
-    chaosConfig: DEFAULT_CHAOS_CONFIG
+    chaosConfig: DEFAULT_CHAOS_CONFIG,
+    requestLog: []
   })
 })
 
@@ -199,5 +205,58 @@ describe('useSynqStore addRecord', () => {
     useSynqStore.getState().addRecord(usersId, { id: 'u1' })
 
     expect(useSynqStore.getState().generatedData[usersId]).toEqual([{ id: 'u1' }])
+  })
+})
+
+describe('useSynqStore request log', () => {
+  const sample = { method: 'GET' as const, path: '/api/users', status: 200, timeMs: 42, injected: false }
+
+  it('starts empty', () => {
+    expect(useSynqStore.getState().requestLog).toEqual([])
+  })
+
+  it('stamps each entry with an id and timestamp', () => {
+    useSynqStore.getState().logRequest(sample)
+
+    const [logged] = useSynqStore.getState().requestLog
+    expect(logged).toMatchObject(sample)
+    expect(logged.id).toBeTruthy()
+    expect(logged.timestamp).toBeGreaterThan(0)
+  })
+
+  it('appends in chronological order', () => {
+    useSynqStore.getState().logRequest({ ...sample, path: '/api/first' })
+    useSynqStore.getState().logRequest({ ...sample, path: '/api/second' })
+
+    expect(useSynqStore.getState().requestLog.map((e) => e.path)).toEqual([
+      '/api/first',
+      '/api/second'
+    ])
+  })
+
+  it('records an injected chaos failure distinctly', () => {
+    useSynqStore.getState().logRequest({ ...sample, status: 500, injected: true })
+
+    expect(useSynqStore.getState().requestLog[0]).toMatchObject({ status: 500, injected: true })
+  })
+
+  it('caps the log, dropping the oldest entries first', () => {
+    for (let i = 0; i < MAX_REQUEST_LOG_ENTRIES + 25; i++) {
+      useSynqStore.getState().logRequest({ ...sample, path: `/api/r${i}` })
+    }
+
+    const log = useSynqStore.getState().requestLog
+    expect(log).toHaveLength(MAX_REQUEST_LOG_ENTRIES)
+    // The first 25 should have been evicted.
+    expect(log[0].path).toBe('/api/r25')
+    expect(log.at(-1)?.path).toBe(`/api/r${MAX_REQUEST_LOG_ENTRIES + 24}`)
+  })
+
+  it('empties the log on clear', () => {
+    useSynqStore.getState().logRequest(sample)
+
+    useSynqStore.getState().clearRequestLog()
+
+    expect(useSynqStore.getState().requestLog).toEqual([])
   })
 })

@@ -7,7 +7,7 @@ import CodeSnippet from './CodeSnippet'
 import ChaosPanel from './ChaosPanel'
 
 export default function EndpointRunner() {
-  const { entities, generatedData, addRecord, chaosConfig } = useSynqStore()
+  const { entities, generatedData, addRecord, chaosConfig, logRequest } = useSynqStore()
 
   // Sandbox States
   const [selectedRoute, setSelectedRoute] = useState<{
@@ -150,6 +150,15 @@ export default function EndpointRunner() {
       addRecord,
       { chaos: chaosConfig }
     )
+
+    // Record it for the observability dashboard before showing the result.
+    logRequest({
+      method,
+      path,
+      status: res.status,
+      timeMs: res.timeMs,
+      injected: res.injected === true
+    })
 
     setResponse(res)
     setIsLoading(false)

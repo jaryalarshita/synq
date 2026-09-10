@@ -53,6 +53,24 @@ export interface ChaosConfig {
 
 export const MAX_CHAOS_LATENCY_MS = 5000
 
+/** One simulated request, recorded for the observability dashboard. */
+export interface RequestLogEntry {
+  id: string
+  timestamp: number
+  method: 'GET' | 'POST'
+  path: string
+  status: number
+  timeMs: number
+  /** True when the chaos engine produced the response rather than the router. */
+  injected: boolean
+}
+
+/**
+ * Cap on retained telemetry. The log is persisted alongside the schema, so it
+ * is trimmed oldest-first to keep localStorage from growing without bound.
+ */
+export const MAX_REQUEST_LOG_ENTRIES = 500
+
 /** Mirrors the pre-chaos behaviour: an 80-240ms delay and no injected errors. */
 export const DEFAULT_CHAOS_CONFIG: ChaosConfig = {
   enabled: false,
@@ -78,6 +96,9 @@ interface SynqState {
   addRecord: (entityId: string, record: any) => void
   updateChaosConfig: (patch: Partial<ChaosConfig>) => void
   resetChaosConfig: () => void
+  requestLog: RequestLogEntry[]
+  logRequest: (entry: Omit<RequestLogEntry, 'id' | 'timestamp'>) => void
+  clearRequestLog: () => void
 }
 
 export const useSynqStore = create<SynqState>()(
@@ -204,6 +225,23 @@ export const useSynqStore = create<SynqState>()(
 
       resetChaosConfig: () => set({ chaosConfig: DEFAULT_CHAOS_CONFIG }),
 
+      requestLog: [],
+
+      logRequest: (entry) => set((state) => {
+        const next = [
+          ...state.requestLog,
+          { ...entry, id: crypto.randomUUID(), timestamp: Date.now() }
+        ]
+        // Keep only the most recent entries (oldest dropped first).
+        return {
+          requestLog: next.length > MAX_REQUEST_LOG_ENTRIES
+            ? next.slice(next.length - MAX_REQUEST_LOG_ENTRIES)
+            : next
+        }
+      }),
+
+      clearRequestLog: () => set({ requestLog: [] }),
+
       setGeneratedData: (data) => set({ generatedData: data }),
       clearGeneratedData: () => set({ generatedData: {} }),
       setIsGenerating: (isGenerating) => set({ isGenerating }),
@@ -220,7 +258,8 @@ export const useSynqStore = create<SynqState>()(
       partialize: (state) => ({
         entities: state.entities,
         generatedData: state.generatedData,
-        chaosConfig: state.chaosConfig
+        chaosConfig: state.chaosConfig,
+        requestLog: state.requestLog
       })
     }
   )
