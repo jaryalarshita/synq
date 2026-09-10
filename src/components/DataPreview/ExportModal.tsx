@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { X, Download, FileText, Database as SqlIcon, Code } from 'lucide-react'
+import { X, Download, FileText, Database as SqlIcon, Code, FileType2 } from 'lucide-react'
 import { useSynqStore } from '../../store/useSynqStore'
-import { exportToJSON, exportToCSV, exportToSQL } from '../../engine/exporters'
+import { exportToJSON, exportToCSV, exportToSQL, exportToFile } from '../../engine/exporters'
+import { generateTypeScriptInterfaces } from '../../engine/typeExporter'
 
 interface ExportModalProps {
   isOpen: boolean
@@ -12,7 +13,7 @@ interface ExportModalProps {
 export default function ExportModal({ isOpen, onClose, activeEntityId }: ExportModalProps) {
   const { entities, generatedData } = useSynqStore()
 
-  const [format, setFormat] = useState<'json' | 'csv' | 'sql'>('json')
+  const [format, setFormat] = useState<'json' | 'csv' | 'sql' | 'ts'>('json')
   const [scope, setScope] = useState<'active' | 'all'>('active')
 
   if (!isOpen) return null
@@ -50,6 +51,12 @@ export default function ExportModal({ isOpen, onClose, activeEntityId }: ExportM
           exportToCSV(headers, rows, `${ent.name.toLowerCase()}_data.csv`)
         })
       }
+    } else if (format === 'ts') {
+      // Types describe the schema, so the active-table scope exports just that
+      // entity's interface and 'all' exports the whole module.
+      const target = scope === 'active' ? [activeEntity] : entities
+      const fileName = scope === 'active' ? `${activeEntity.name.toLowerCase()}.ts` : `${datasetName}.ts`
+      exportToFile(generateTypeScriptInterfaces(target), fileName, 'text/plain;charset=utf-8;')
     } else if (format === 'sql') {
       if (scope === 'active') {
         exportToSQL([activeEntity], generatedData, `${activeEntity.name.toLowerCase()}_data.sql`)
@@ -100,6 +107,14 @@ export default function ExportModal({ isOpen, onClose, activeEntityId }: ExportM
                 <span className="format-title">SQL</span>
                 <span className="format-desc">Relational Inserts</span>
               </div>
+              <div
+                className={`format-card ${format === 'ts' ? 'active' : ''}`}
+                onClick={() => setFormat('ts')}
+              >
+                <FileType2 size={20} className="format-icon" />
+                <span className="format-title">TypeScript</span>
+                <span className="format-desc">Interface definitions</span>
+              </div>
             </div>
           </div>
 
@@ -125,9 +140,11 @@ export default function ExportModal({ isOpen, onClose, activeEntityId }: ExportM
                 <div className="scope-details">
                   <span className="scope-title">All schema tables ({entities.length})</span>
                   <span className="scope-desc">
-                    {format === 'sql' 
-                      ? 'Exports all tables sorted topologically to satisfy foreign key rules.' 
-                      : 'Downloads all model datasets.'}
+                    {format === 'sql'
+                      ? 'Exports all tables sorted topologically to satisfy foreign key rules.'
+                      : format === 'ts'
+                        ? 'Exports an interface for every entity in one .ts module.'
+                        : 'Downloads all model datasets.'}
                   </span>
                 </div>
               </div>

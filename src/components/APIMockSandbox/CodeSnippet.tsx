@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Check, Copy } from 'lucide-react'
-import { generateCodeSnippets } from '../../engine/codeGenerators'
+import { generateCodeSnippets, SNIPPET_LANGUAGES } from '../../engine/codeGenerators'
+import type { SnippetLanguage } from '../../engine/codeGenerators'
 
 interface CodeSnippetProps {
   method: 'GET' | 'POST'
@@ -9,11 +10,11 @@ interface CodeSnippetProps {
 }
 
 export default function CodeSnippet({ method, path, body }: CodeSnippetProps) {
-  const [activeTab, setActiveTab] = useState<'curl' | 'fetch'>('curl')
+  const [activeTab, setActiveTab] = useState<SnippetLanguage>('curl')
   const [copied, setCopied] = useState(false)
 
   const snippets = generateCodeSnippets(method, path, body)
-  const activeSnippet = activeTab === 'curl' ? snippets.curl : snippets.fetch
+  const activeSnippet = snippets[activeTab]
 
   const handleCopy = () => {
     navigator.clipboard.writeText(activeSnippet)
@@ -25,20 +26,16 @@ export default function CodeSnippet({ method, path, body }: CodeSnippetProps) {
     <div className="code-snippet-container glass-card">
       <div className="snippet-header">
         <div className="snippet-tabs">
-          <button
-            type="button"
-            className={`snippet-tab ${activeTab === 'curl' ? 'active' : ''}`}
-            onClick={() => setActiveTab('curl')}
-          >
-            cURL
-          </button>
-          <button
-            type="button"
-            className={`snippet-tab ${activeTab === 'fetch' ? 'active' : ''}`}
-            onClick={() => setActiveTab('fetch')}
-          >
-            JavaScript (Fetch)
-          </button>
+          {SNIPPET_LANGUAGES.map(({ key, label }) => (
+            <button
+              key={key}
+              type="button"
+              className={`snippet-tab ${activeTab === key ? 'active' : ''}`}
+              onClick={() => setActiveTab(key)}
+            >
+              {label}
+            </button>
+          ))}
         </div>
         <button
           type="button"
