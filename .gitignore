@@ -23,6 +23,5 @@ dist-ssr
 *.sln
 *.sw?
 
-# Documentation build guides (ignored in root)
-ROADMAP.md
-synq_build_guide.md
+# Working notes: roadmap/build-guide docs, todo checklists (local reference only)
+notes/
