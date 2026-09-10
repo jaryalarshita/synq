@@ -4,9 +4,10 @@ import { useSynqStore } from '../../store/useSynqStore'
 import { simulateApiRequest } from '../../engine/mockApiServer'
 import type { MockApiResponse } from '../../engine/mockApiServer'
 import CodeSnippet from './CodeSnippet'
+import ChaosPanel from './ChaosPanel'
 
 export default function EndpointRunner() {
-  const { entities, generatedData, addRecord } = useSynqStore()
+  const { entities, generatedData, addRecord, chaosConfig } = useSynqStore()
 
   // Sandbox States
   const [selectedRoute, setSelectedRoute] = useState<{
@@ -146,7 +147,8 @@ export default function EndpointRunner() {
       method === 'POST' ? bodyInput : undefined,
       entities,
       generatedData,
-      addRecord
+      addRecord,
+      { chaos: chaosConfig }
     )
 
     setResponse(res)
@@ -249,6 +251,8 @@ export default function EndpointRunner() {
 
         {/* Sandbox details */}
         <div className="sandbox-main">
+          <ChaosPanel />
+
           {selectedRoute && (
             <div className="request-response-split">
               {/* Request Panel */}

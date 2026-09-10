@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import EndpointRunner from './EndpointRunner'
-import { useSynqStore } from '../../store/useSynqStore'
+import { useSynqStore, DEFAULT_CHAOS_CONFIG } from '../../store/useSynqStore'
 import type { Entity } from '../../store/useSynqStore'
 
 const users: Entity = {
@@ -25,7 +25,11 @@ beforeEach(() => {
     value: { writeText: vi.fn() },
     configurable: true
   })
-  useSynqStore.setState({ entities: [users], generatedData: { [users.id]: userRows } })
+  useSynqStore.setState({
+    entities: [users],
+    generatedData: { [users.id]: userRows },
+    chaosConfig: DEFAULT_CHAOS_CONFIG
+  })
 })
 
 describe('EndpointRunner routes', () => {
@@ -115,6 +119,27 @@ describe('EndpointRunner request execution', () => {
     await user.click(screen.getByText('Send'))
 
     expect(await screen.findByText('Malformed JSON payload body')).toBeInTheDocument()
+  })
+
+  it('surfaces an injected chaos failure instead of the real response', async () => {
+    const user = userEvent.setup()
+    // 100% 500-rate means the roll can only land on the injected failure.
+    useSynqStore.setState({
+      chaosConfig: {
+        enabled: true,
+        latencyMin: 0,
+        latencyMax: 0,
+        errorRates: { 500: 100, 429: 0, 404: 0 }
+      }
+    })
+    render(<EndpointRunner />)
+
+    await user.click(screen.getByText('Send'))
+
+    expect(
+      await screen.findByText('500 Internal Server Error', undefined, { timeout: 3000 })
+    ).toBeInTheDocument()
+    expect(screen.getByText(/injectedByChaos/)).toBeInTheDocument()
   })
 
   it('persists a valid POST into the store and reports 201', async () => {

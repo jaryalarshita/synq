@@ -1,10 +1,60 @@
-import type { Entity } from '../store/useSynqStore'
+import type { ChaosConfig, ChaosErrorStatus, Entity } from '../store/useSynqStore'
+import { DEFAULT_CHAOS_CONFIG } from '../store/useSynqStore'
 
 export interface MockApiResponse {
   status: number
   statusText: string
   data: any
   timeMs: number
+  /** True when the chaos engine produced this response instead of the router. */
+  injected?: boolean
+}
+
+export interface SimulateOptions {
+  chaos?: ChaosConfig
+  /** Injectable RNG (defaults to Math.random) so chaos is deterministic in tests. */
+  random?: () => number
+}
+
+const STATUS_TEXT: Record<ChaosErrorStatus, string> = {
+  500: 'Internal Server Error',
+  429: 'Too Many Requests',
+  404: 'Not Found'
+}
+
+const INJECTED_MESSAGE: Record<ChaosErrorStatus, string> = {
+  500: 'Chaos engine injected a simulated server failure.',
+  429: 'Chaos engine injected a simulated rate limit.',
+  404: 'Chaos engine injected a simulated missing resource.'
+}
+
+/**
+ * Picks the response delay for a request. With chaos disabled this keeps the
+ * original 80-240ms feel; enabled, it samples the configured range.
+ */
+function resolveLatency(chaos: ChaosConfig, random: () => number): number {
+  const { latencyMin, latencyMax } = chaos.enabled ? chaos : DEFAULT_CHAOS_CONFIG
+  const spread = Math.max(0, latencyMax - latencyMin)
+  return Math.floor(random() * (spread + 1)) + latencyMin
+}
+
+/**
+ * Rolls once against the configured error rates. Rates are laid end to end on
+ * a 0-100 line, so a 10/5/0 config fails 10% with 500, 5% with 429, and
+ * succeeds the remaining 85% of the time.
+ */
+function rollInjectedStatus(chaos: ChaosConfig, random: () => number): ChaosErrorStatus | null {
+  if (!chaos.enabled) return null
+
+  const roll = random() * 100
+  let threshold = 0
+
+  for (const status of [500, 429, 404] as ChaosErrorStatus[]) {
+    threshold += chaos.errorRates[status] || 0
+    if (roll < threshold) return status
+  }
+
+  return null
 }
 
 /**
@@ -34,13 +84,29 @@ export async function simulateApiRequest(
   body: string | undefined,
   entities: Entity[],
   generatedData: Record<string, any[]>,
-  addRecord: (entityId: string, record: any) => void
+  addRecord: (entityId: string, record: any) => void,
+  options: SimulateOptions = {}
 ): Promise<MockApiResponse> {
   const startTime = performance.now()
-  
-  // Simulated network latency: random delay between 80ms and 240ms
-  const latency = Math.floor(Math.random() * 160) + 80
+  const chaos = options.chaos ?? DEFAULT_CHAOS_CONFIG
+  const random = options.random ?? Math.random
+
+  // Simulated network latency, either the default feel or the chaos range
+  const latency = resolveLatency(chaos, random)
   await new Promise((resolve) => setTimeout(resolve, latency))
+
+  // Fault injection happens before routing: a chaos failure short-circuits the
+  // request the same way a real upstream outage would.
+  const injectedStatus = rollInjectedStatus(chaos, random)
+  if (injectedStatus !== null) {
+    return {
+      status: injectedStatus,
+      statusText: STATUS_TEXT[injectedStatus],
+      data: { error: INJECTED_MESSAGE[injectedStatus], injectedByChaos: true },
+      timeMs: Math.round(performance.now() - startTime),
+      injected: true
+    }
+  }
 
   try {
     // 1. Split path into parts, ignoring query parameters during route matching

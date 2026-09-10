@@ -15,10 +15,36 @@ export interface Entity {
   fields: SchemaField[]
 }
 
+/** HTTP statuses the chaos engine can inject into a mock response. */
+export type ChaosErrorStatus = 500 | 429 | 404
+
+/**
+ * Fault-injection settings applied to every simulated request. Latency is a
+ * range the engine picks from; error rates are percentages (0-100) that are
+ * rolled independently of one another but capped at 100% in total.
+ */
+export interface ChaosConfig {
+  enabled: boolean
+  latencyMin: number
+  latencyMax: number
+  errorRates: Record<ChaosErrorStatus, number>
+}
+
+export const MAX_CHAOS_LATENCY_MS = 5000
+
+/** Mirrors the pre-chaos behaviour: an 80-240ms delay and no injected errors. */
+export const DEFAULT_CHAOS_CONFIG: ChaosConfig = {
+  enabled: false,
+  latencyMin: 80,
+  latencyMax: 240,
+  errorRates: { 500: 0, 429: 0, 404: 0 }
+}
+
 interface SynqState {
   entities: Entity[]
   generatedData: Record<string, any[]>
   isGenerating: boolean
+  chaosConfig: ChaosConfig
   addEntity: (name: string) => void
   updateEntityName: (id: string, name: string) => void
   deleteEntity: (id: string) => void
@@ -29,6 +55,8 @@ interface SynqState {
   clearGeneratedData: () => void
   setIsGenerating: (isGenerating: boolean) => void
   addRecord: (entityId: string, record: any) => void
+  updateChaosConfig: (patch: Partial<ChaosConfig>) => void
+  resetChaosConfig: () => void
 }
 
 export const useSynqStore = create<SynqState>()(
@@ -130,6 +158,31 @@ export const useSynqStore = create<SynqState>()(
       })),
 
       isGenerating: false,
+      chaosConfig: DEFAULT_CHAOS_CONFIG,
+
+      updateChaosConfig: (patch) => set((state) => {
+        const next = { ...state.chaosConfig, ...patch }
+
+        // Clamp to the supported latency window and keep min <= max, so a
+        // slider drag can never produce an impossible range.
+        next.latencyMin = Math.min(Math.max(0, next.latencyMin), MAX_CHAOS_LATENCY_MS)
+        next.latencyMax = Math.min(Math.max(0, next.latencyMax), MAX_CHAOS_LATENCY_MS)
+        if (next.latencyMin > next.latencyMax) {
+          // Whichever bound the caller just moved wins.
+          if (patch.latencyMin !== undefined) next.latencyMax = next.latencyMin
+          else next.latencyMin = next.latencyMax
+        }
+
+        next.errorRates = { ...state.chaosConfig.errorRates, ...(patch.errorRates || {}) }
+        for (const status of Object.keys(next.errorRates) as unknown as ChaosErrorStatus[]) {
+          next.errorRates[status] = Math.min(Math.max(0, next.errorRates[status]), 100)
+        }
+
+        return { chaosConfig: next }
+      }),
+
+      resetChaosConfig: () => set({ chaosConfig: DEFAULT_CHAOS_CONFIG }),
+
       setGeneratedData: (data) => set({ generatedData: data }),
       clearGeneratedData: () => set({ generatedData: {} }),
       setIsGenerating: (isGenerating) => set({ isGenerating }),
@@ -145,7 +198,8 @@ export const useSynqStore = create<SynqState>()(
       // Only persist the schema/data itself, not transient UI flags
       partialize: (state) => ({
         entities: state.entities,
-        generatedData: state.generatedData
+        generatedData: state.generatedData,
+        chaosConfig: state.chaosConfig
       })
     }
   )
