@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/jaryalarshita/synq/actions/workflows/ci.yml/badge.svg)](https://github.com/jaryalarshita/synq/actions/workflows/ci.yml)
 
-**Live demo:** [synq-topaz.vercel.app](https://synq-topaz.vercel.app)
+**Live demo:** [synq-studio.vercel.app](https://synq-studio.vercel.app)
 
 **Synq** is a high-performance, serverless developer tool that runs entirely in the browser. It lets you visually define relational database schemas, generate thousands of realistic synthetic records with cascading foreign-key integrity and statistical distributions, preview and filter data inside an interactive grid, export schemas/datasets in multiple formats, and exercise a mock REST API — complete with fault injection and live traffic telemetry — all without any backend server.
 
