@@ -5,14 +5,14 @@ describe('generateCodeSnippets', () => {
   it('builds a plain GET curl command against the local base URL', () => {
     const { curl } = generateCodeSnippets('GET', '/api/users')
 
-    expect(curl).toBe('curl -X GET "http://localhost:5173/api/users"')
+    expect(curl).toBe('curl -X GET "https://api.example.com/api/users"')
   })
 
   it('normalises a path that is missing its leading slash', () => {
     const { curl, fetch } = generateCodeSnippets('GET', 'api/users')
 
-    expect(curl).toContain('http://localhost:5173/api/users')
-    expect(fetch).toContain("fetch('http://localhost:5173/api/users')")
+    expect(curl).toContain('https://api.example.com/api/users')
+    expect(fetch).toContain("fetch('https://api.example.com/api/users')")
   })
 
   it('preserves query parameters in both snippets', () => {
@@ -60,14 +60,14 @@ describe('generateCodeSnippets — Python', () => {
     const { python } = generateCodeSnippets('GET', '/api/users')
 
     expect(python).toContain('import requests')
-    expect(python).toContain('requests.get("http://localhost:5173/api/users")')
+    expect(python).toContain('requests.get("https://api.example.com/api/users")')
     expect(python).toContain('response.json()')
   })
 
   it('sends the payload with requests.post', () => {
     const { python } = generateCodeSnippets('POST', '/api/users', '{"email":"dev@example.com"}')
 
-    expect(python).toContain('requests.post("http://localhost:5173/api/users", json=payload)')
+    expect(python).toContain('requests.post("https://api.example.com/api/users", json=payload)')
     expect(python).toContain('"email": "dev@example.com"')
   })
 
@@ -103,13 +103,13 @@ describe('generateCodeSnippets — Axios', () => {
     const { axios } = generateCodeSnippets('GET', '/api/users')
 
     expect(axios).toContain("import axios from 'axios';")
-    expect(axios).toContain("axios.get('http://localhost:5173/api/users')")
+    expect(axios).toContain("axios.get('https://api.example.com/api/users')")
   })
 
   it('passes the parsed body as the second post argument', () => {
     const { axios } = generateCodeSnippets('POST', '/api/users', '{"email":"dev@example.com"}')
 
-    expect(axios).toContain("axios.post('http://localhost:5173/api/users', {")
+    expect(axios).toContain("axios.post('https://api.example.com/api/users', {")
     expect(axios).toContain('"email": "dev@example.com"')
   })
 
@@ -125,7 +125,7 @@ describe('generateCodeSnippets — Rust', () => {
     const { rust } = generateCodeSnippets('GET', '/api/users')
 
     expect(rust).toContain('#[tokio::main]')
-    expect(rust).toContain('reqwest::get("http://localhost:5173/api/users")')
+    expect(rust).toContain('reqwest::get("https://api.example.com/api/users")')
     expect(rust).toContain('let body: Value = response.json().await?;')
   })
 
@@ -157,7 +157,19 @@ describe('generateCodeSnippets — all languages', () => {
     const snippets = generateCodeSnippets('GET', '/api/orders?limit=5')
 
     for (const snippet of Object.values(snippets)) {
-      expect(snippet).toContain('http://localhost:5173/api/orders?limit=5')
+      expect(snippet).toContain('https://api.example.com/api/orders?limit=5')
+    }
+  })
+})
+
+describe('generateCodeSnippets — placeholder host', () => {
+  it('never points any language at localhost', () => {
+    for (const method of ['GET', 'POST'] as const) {
+      const snippets = generateCodeSnippets(method, '/api/users', '{"a":1}')
+      for (const snippet of Object.values(snippets)) {
+        expect(snippet).not.toContain('localhost')
+        expect(snippet).toContain('https://api.example.com')
+      }
     }
   })
 })

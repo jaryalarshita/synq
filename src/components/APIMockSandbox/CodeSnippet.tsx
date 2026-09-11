@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Check, Copy } from 'lucide-react'
-import { generateCodeSnippets, SNIPPET_LANGUAGES } from '../../engine/codeGenerators'
+import { generateCodeSnippets, SNIPPET_LANGUAGES, SNIPPET_BASE_URL } from '../../engine/codeGenerators'
 import type { SnippetLanguage } from '../../engine/codeGenerators'
 
 interface CodeSnippetProps {
@@ -61,6 +61,10 @@ export default function CodeSnippet({ method, path, body }: CodeSnippetProps) {
           <code>{activeSnippet}</code>
         </pre>
       </div>
+      <p className="snippet-template-note">
+        Template — swap <code>{SNIPPET_BASE_URL}</code> for your API's base URL. Synq's mock
+        server lives in your browser, not on the network.
+      </p>
     </div>
   )
 }
