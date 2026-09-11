@@ -8,6 +8,16 @@ Built with **React, Vite, and Zustand**, Synq features a premium dark-mode, glas
 
 ---
 
+## 📸 Screenshot
+
+![Synq observability dashboard showing request throughput, latency distribution, and status code breakdown while Chaos Studio is injecting failures](docs/screenshot.png)
+
+*The Observability dashboard mid-run: Chaos Studio is dialed up, so the 18% of requests
+returning 5xx and the 736ms p95 latency are deliberate — this is the fault-injection engine
+being exercised, not a bug.*
+
+---
+
 ## 🚀 Features
 
 ### 1. Visual Schema Builder
