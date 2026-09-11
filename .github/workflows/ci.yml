@@ -23,10 +23,10 @@ jobs:
           node-version: 22
           cache: npm
 
-      # @vitejs/plugin-react has not declared Vite 8 in its peer range yet, so
-      # a plain `npm ci` fails with ERESOLVE. Matches the README's install step.
+      # Peer-dependency resolution is configured in .npmrc, so a plain install
+      # here also verifies that file works on a clean machine.
       - name: Install dependencies
-        run: npm ci --legacy-peer-deps
+        run: npm ci
 
       # --max-warnings=0 keeps the suite at zero warnings; without it, ESLint
       # exits 0 on warnings and regressions would slip through unnoticed.

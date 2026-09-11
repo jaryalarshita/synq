@@ -1,4 +1,10 @@
-const BASE_URL = 'http://localhost:5173'
+/**
+ * Placeholder host for generated snippets. The mock server runs inside the
+ * browser, so no real address would answer; example.com is reserved (RFC 2606)
+ * for documentation and can never resolve to someone else's site.
+ */
+export const SNIPPET_BASE_URL = 'https://api.example.com'
+const BASE_URL = SNIPPET_BASE_URL
 
 export interface CodeSnippets {
   curl: string

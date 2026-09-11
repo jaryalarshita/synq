@@ -33,7 +33,7 @@ describe('CodeSnippet', () => {
 
     await user.click(screen.getByText('JavaScript (Fetch)'))
 
-    expect(screen.getByText(/fetch\('http:\/\/localhost:5173\/api\/users'\)/)).toBeInTheDocument()
+    expect(screen.getByText(/fetch\('https:\/\/api\.example\.com\/api\/users'\)/)).toBeInTheDocument()
     expect(screen.queryByText(/curl -X GET/)).not.toBeInTheDocument()
   })
 
@@ -50,7 +50,7 @@ describe('CodeSnippet', () => {
 
     await user.click(screen.getByText('Copy'))
 
-    expect(writeText).toHaveBeenCalledWith('curl -X GET "http://localhost:5173/api/users"')
+    expect(writeText).toHaveBeenCalledWith('curl -X GET "https://api.example.com/api/users"')
     expect(await screen.findByText('Copied!')).toBeInTheDocument()
   })
 
@@ -101,5 +101,14 @@ describe('CodeSnippet — language tabs', () => {
     await user.click(screen.getByText('Copy'))
 
     expect(writeText).toHaveBeenCalledWith(expect.stringContaining("import axios from 'axios';"))
+  })
+})
+
+describe('CodeSnippet — template labelling', () => {
+  it('labels the snippets as templates pointing at a placeholder host', () => {
+    render(<CodeSnippet method="GET" path="/api/users" />)
+
+    expect(screen.getByText(/Template — swap/)).toBeInTheDocument()
+    expect(screen.getByText('https://api.example.com', { selector: 'p code' })).toBeInTheDocument()
   })
 })
