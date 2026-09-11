@@ -35,7 +35,7 @@ Built with **React, Vite, and Zustand**, Synq features a premium dark-mode, glas
   * `GET /api/[entity]/:id` (record primary-key lookups)
   * `POST /api/[entity]` (validates JSON payload format/types, injects new UUID, appends records to local state, and returns `201 Created`)
 * **Timing & Latency**: Simulates network response times (80ms - 240ms delay) using performance timers.
-* **Code Generator**: Dynamically outputs integration code snippets for **cURL** and JavaScript **`fetch()`** matching the selected endpoint parameters.
+* **Code Generator**: Outputs ready-to-adapt client snippets for the selected endpoint — see *Multi-Language Code Export* below.
 
 ### 5. Network Chaos & Fault Injection Studio
 * **Latency Matrix**: Dial simulated response times anywhere from `0ms` to `5000ms` with paired sliders and typed entry.
@@ -54,13 +54,13 @@ Built with **React, Vite, and Zustand**, Synq features a premium dark-mode, glas
 * **Capped telemetry**: The request log is FIFO-limited so persisted state cannot grow without bound.
 
 ### 8. Multi-Language Code Export
-* **Five client snippets**: `cURL`, JavaScript `fetch()`, `Axios`, Python (`requests`), and Rust (`reqwest`), each reflecting the selected route and payload.
+* **Five client snippets**: `cURL`, JavaScript `fetch()`, `Axios`, Python (`requests`), and Rust (`reqwest`), each reflecting the selected route and payload. They target the reserved placeholder host `api.example.com` and are labelled as templates, since the mock server runs in the browser rather than at a network address.
 * **TypeScript Interfaces**: Export the schema as typed definitions — enum options become union literals, foreign keys are annotated, and interfaces are emitted in dependency order.
 
 ### 9. Workspace Persistence & Responsive UI
 * **Session Persistence**: Schemas, generated datasets, chaos settings, telemetry, and your active tab are saved to `localStorage`, so a refresh restores your workspace exactly.
 * **Responsive Layout**: Breakpoints collapse the side-by-side panes into stacked columns on tablets, and reduce the navigation to icons on small screens.
-* **Deferred Loading**: The Faker engine is code-split into its own chunk and fetched only when you generate data, keeping the initial bundle at ~185 kB.
+* **Deferred Loading**: The Faker engine is code-split into its own chunk and fetched only when you generate data, keeping the initial bundle around 208 kB.
 
 ---
 
@@ -72,7 +72,7 @@ Built with **React, Vite, and Zustand**, Synq features a premium dark-mode, glas
 * **Synthetic Engine**: @faker-js/faker
 * **Styling**: Vanilla CSS (custom properties, glassmorphism, responsive grid layouts)
 * **Charts**: Hand-authored SVG — no charting dependency
-* **Testing**: Vitest + React Testing Library (237 tests), linted and built in CI
+* **Testing**: Vitest + React Testing Library (239 tests), linted and built in CI
 
 ---
 
