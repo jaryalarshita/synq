@@ -14,7 +14,7 @@ Built with **React, Vite, and Zustand**, Synq features a premium dark-mode, glas
 
 ---
 
-## 🚀 Features
+## Features
 
 ### 1. Visual Schema Builder
 * **Entity Management**: Visually construct tables (entities) and define custom columns.
@@ -70,7 +70,7 @@ Built with **React, Vite, and Zustand**, Synq features a premium dark-mode, glas
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 * **Core**: React 18, TypeScript, Vite
 * **State Management**: Zustand
@@ -82,7 +82,7 @@ Built with **React, Vite, and Zustand**, Synq features a premium dark-mode, glas
 
 ---
 
-## 🧠 Design Notes
+## Design Notes
 
 The interesting parts of this project are the constraints, not the feature list.
 
@@ -146,7 +146,7 @@ capabilities this version doesn't need.
 
 ---
 
-## 🏁 Getting Started
+## Getting Started
 
 ### Prerequisites
 * [Node.js](https://nodejs.org/) (v18 or higher recommended)
@@ -183,7 +183,7 @@ Schema Builder / Data Grid / API Sandbox UI.
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```
 synq/
@@ -228,7 +228,7 @@ synq/
 
 ---
 
-## 🗺️ Roadmap
+## Roadmap
 
 * **v1.0 — Shipped**: Visual schema builder, relational synthetic data engine, data grid with JSON/CSV/SQL export, and the mock REST sandbox.
 * **v2.0 — Shipped**: Chaos & fault injection studio, statistical distributions, live observability dashboard, and multi-language exporters.
@@ -236,6 +236,6 @@ synq/
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
