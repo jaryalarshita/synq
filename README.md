@@ -2,23 +2,15 @@
 
 [![CI](https://github.com/jaryalarshita/synq/actions/workflows/ci.yml/badge.svg)](https://github.com/jaryalarshita/synq/actions/workflows/ci.yml)
 
+**Live demo:** [synq-studio.vercel.app](https://synq-studio.vercel.app)
+
 **Synq** is a high-performance, serverless developer tool that runs entirely in the browser. It lets you visually define relational database schemas, generate thousands of realistic synthetic records with cascading foreign-key integrity and statistical distributions, preview and filter data inside an interactive grid, export schemas/datasets in multiple formats, and exercise a mock REST API — complete with fault injection and live traffic telemetry — all without any backend server.
 
 Built with **React, Vite, and Zustand**, Synq features a premium dark-mode, glassmorphic layout optimized for technical developer workflows.
 
 ---
 
-## 📸 Screenshot
-
-![Synq observability dashboard showing request throughput, latency distribution, and status code breakdown while Chaos Studio is injecting failures](docs/screenshot.png)
-
-*The Observability dashboard mid-run: Chaos Studio is dialed up, so the 18% of requests
-returning 5xx and the 736ms p95 latency are deliberate — this is the fault-injection engine
-being exercised, not a bug.*
-
----
-
-## 🚀 Features
+## Features
 
 ### 1. Visual Schema Builder
 * **Entity Management**: Visually construct tables (entities) and define custom columns.
@@ -74,7 +66,7 @@ being exercised, not a bug.*
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 * **Core**: React 18, TypeScript, Vite
 * **State Management**: Zustand
@@ -86,7 +78,7 @@ being exercised, not a bug.*
 
 ---
 
-## 🧠 Design Notes
+## Design Notes
 
 The interesting parts of this project are the constraints, not the feature list.
 
@@ -150,7 +142,7 @@ capabilities this version doesn't need.
 
 ---
 
-## 🏁 Getting Started
+## Getting Started
 
 ### Prerequisites
 * [Node.js](https://nodejs.org/) (v18 or higher recommended)
@@ -187,7 +179,7 @@ Schema Builder / Data Grid / API Sandbox UI.
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```
 synq/
@@ -232,7 +224,7 @@ synq/
 
 ---
 
-## 🗺️ Roadmap
+## Roadmap
 
 * **v1.0 — Shipped**: Visual schema builder, relational synthetic data engine, data grid with JSON/CSV/SQL export, and the mock REST sandbox.
 * **v2.0 — Shipped**: Chaos & fault injection studio, statistical distributions, live observability dashboard, and multi-language exporters.
@@ -240,6 +232,6 @@ synq/
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
